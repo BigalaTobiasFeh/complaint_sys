@@ -1,0 +1,81 @@
+
+color code: #08387F
+👥 User Roles:
+    1. Student
+        ◦ Login (With Matricule and password)
+        ◦ Password recovery through email or phone number (This will be gotten from the information in the registration form)
+        ◦ During the registration process, when the student submits the form, a verification code will be sent either to his phone number or to the email address, depending on the medium the student chooses.
+        ◦ File new complaints
+        ◦ Track complaint status (Unresolved, Processing, Resolve, Rejected)
+        ◦ Receive updates (through email with link to uba website to login and view updated transcript)
+        ◦ Give feedback
+    2. Admin (School management)
+        ◦ Manage user accounts (Block student accounts, Create departments and department accounts)
+        ◦ Login (With Email/Username and Password)
+        ◦ Set Datelines for submissions
+        ◦ Assign complaints to staff
+        ◦ Monitor resolution process
+        ◦ Generate reports 
+    3. Department Officer
+        ◦ View complaints submitted to the respective department.(This is chosen on the complaint form and the when the student submits the complaint, it automatically goes to the department chosen on the form)
+        ◦ Login (With Email/Username and Password)
+        ◦ System sends a message to the Department officer’s email, at a particular time of the day let’s say (5:00pm), about the number of complaints which have been submitted for that day
+        ◦ Respond and update status
+        ◦ Communicate with students
+
+🧩 Key Modules & Features:
+1. User Authentication & Access Control
+    • Login/Logout/Register
+    • Role-based dashboard
+2. Complaint Submission
+    • Complaint category (e.g. CA, Exam, etc)
+    • Description field
+    • File attachments (optional)
+    • Submission timestamp
+3. Complaint Tracking & Status
+    • Status: Pending, In Progress, Resolved, Rejected
+    • Automatic updates via dashboard/email
+4. Admin Panel
+    • View and filter all complaints
+    • Assign complaints to appropriate departments
+    • Escalate unresolved complaints
+5. Department/Staff Interface
+    • View assigned complaints
+    • Respond with resolution notes
+    • Change complaint status
+6. Notifications System
+    • Email/SMS/On-site alerts for updates
+    • New complaint alerts to admin/staff
+7. Feedback & Satisfaction
+    • Student rates resolution quality
+    • Optional comment for feedback
+8. Reports & Analytics
+    • Monthly/quarterly/yearly reports
+    • Complaint resolution time
+    • Staff performance metrics
+
+🛠️ Technologies You Can Use:
+Layer
+Suggested Tech Stack
+Frontend: HTML, tailwind CSS,React
+Backend:Python (Django/Flask)
+Database: PostgreSQL
+Authentication: JWT
+
+COMPLAINT FORM
+Name of Student:……………………………………………………….	
+Registration Number:……………………………...	Year of Study:……………………
+Department:………………………………… Date:……………………
+Phone Number:…………………………………………………….
+Academic Year:…………………………………… Semester Concerned:………………... 
+Course Code:……………………………………………… Course Level:………………...  
+Course Title:…………………………………………………………..
+Complaint Concerning 	[checkbox]CA Mark 	[checkbox]Exam Mark     [checkbox]Other 
+Description: …………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………….
+
+
+
+
+
+
+
