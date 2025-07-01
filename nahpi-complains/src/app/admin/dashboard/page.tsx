@@ -21,7 +21,6 @@ const mockStats = {
   inProgressComplaints: 18,
   resolvedComplaints: 98,
   rejectedComplaints: 17,
-  unassignedComplaints: 12,
   overdueComplaints: 8,
   totalUsers: 1247,
   totalStudents: 1198,
@@ -59,7 +58,7 @@ const mockRecentComplaints = [
     title: 'Course Registration System Error',
     student: 'Mike Wilson',
     department: 'Computer Science',
-    status: 'unassigned' as const,
+    status: 'pending' as const,
     priority: 'high' as const,
     submittedAt: new Date('2024-01-18'),
     isOverdue: false
@@ -135,11 +134,11 @@ export default function AdminDashboard() {
 
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600">Unassigned</CardTitle>
+              <CardTitle className="text-sm font-medium text-gray-600">In Progress</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-warning">{mockStats.unassignedComplaints}</div>
-              <p className="text-xs text-gray-500 mt-1">Require assignment</p>
+              <div className="text-2xl font-bold text-info">{mockStats.inProgressComplaints}</div>
+              <p className="text-xs text-gray-500 mt-1">Being processed</p>
             </CardContent>
           </Card>
 
@@ -317,12 +316,12 @@ export default function AdminDashboard() {
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <Link href="/admin/complaints/unassigned">
+              <Link href="/admin/complaints">
                 <Button variant="outline" className="w-full h-20 flex-col">
                   <svg className="w-6 h-6 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                   </svg>
-                  Assign Complaints
+                  View Complaints
                 </Button>
               </Link>
               

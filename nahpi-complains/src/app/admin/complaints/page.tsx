@@ -22,7 +22,6 @@ const mockComplaints = [
     title: 'CA Mark Discrepancy in Advanced Mathematics',
     student: { name: 'John Doe', email: 'john.doe@student.nahpi.edu', matricule: 'STU2024001' },
     department: 'Mathematics',
-    assignedTo: 'Dr. Smith',
     status: 'pending' as const,
     priority: 'high' as const,
     submittedAt: new Date('2024-01-20'),
@@ -38,8 +37,7 @@ const mockComplaints = [
     title: 'Exam Mark Query for Physics II',
     student: { name: 'Jane Smith', email: 'jane.smith@student.nahpi.edu', matricule: 'STU2024002' },
     department: 'Physics',
-    assignedTo: null,
-    status: 'unassigned' as const,
+    status: 'pending' as const,
     priority: 'medium' as const,
     submittedAt: new Date('2024-01-19'),
     updatedAt: new Date('2024-01-19'),
@@ -54,7 +52,6 @@ const mockComplaints = [
     title: 'Course Registration System Error',
     student: { name: 'Mike Wilson', email: 'mike.wilson@student.nahpi.edu', matricule: 'STU2024003' },
     department: 'Computer Science',
-    assignedTo: 'Dr. Chen',
     status: 'in_progress' as const,
     priority: 'high' as const,
     submittedAt: new Date('2024-01-18'),
@@ -70,7 +67,6 @@ const mockComplaints = [
     title: 'Missing Assignment Grade Entry',
     student: { name: 'Sarah Davis', email: 'sarah.davis@student.nahpi.edu', matricule: 'STU2024004' },
     department: 'Engineering',
-    assignedTo: 'Dr. Brown',
     status: 'resolved' as const,
     priority: 'low' as const,
     submittedAt: new Date('2024-01-15'),
@@ -83,7 +79,6 @@ const mockComplaints = [
 ]
 
 const departments = ['All Departments', 'Computer Science', 'Mathematics', 'Physics', 'Engineering', 'Business']
-const officers = ['All Officers', 'Dr. Chen', 'Dr. Smith', 'Dr. Brown', 'Dr. Johnson', 'Unassigned']
 
 function getStatusColor(status: string) {
   switch (status) {
@@ -95,8 +90,6 @@ function getStatusColor(status: string) {
       return 'success'
     case 'rejected':
       return 'error'
-    case 'unassigned':
-      return 'secondary'
     default:
       return 'default'
   }
@@ -127,7 +120,6 @@ export default function AdminComplaintsPage() {
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState('')
   const [departmentFilter, setDepartmentFilter] = useState('')
-  const [assignedToFilter, setAssignedToFilter] = useState('')
   const [selectedComplaints, setSelectedComplaints] = useState<string[]>([])
 
   const filteredComplaints = mockComplaints.filter(complaint => {
@@ -135,14 +127,11 @@ export default function AdminComplaintsPage() {
                          complaint.complaintId.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          complaint.student.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          complaint.courseCode.toLowerCase().includes(searchTerm.toLowerCase())
-    
+
     const matchesStatus = !statusFilter || complaint.status === statusFilter
     const matchesDepartment = !departmentFilter || departmentFilter === 'All Departments' || complaint.department === departmentFilter
-    const matchesAssignedTo = !assignedToFilter || assignedToFilter === 'All Officers' || 
-                             (assignedToFilter === 'Unassigned' && !complaint.assignedTo) ||
-                             complaint.assignedTo === assignedToFilter
 
-    return matchesSearch && matchesStatus && matchesDepartment && matchesAssignedTo
+    return matchesSearch && matchesStatus && matchesDepartment
   })
 
   const handleSelectComplaint = (complaintId: string) => {
@@ -161,9 +150,9 @@ export default function AdminComplaintsPage() {
     }
   }
 
-  const handleBulkAssign = () => {
+  const handleBulkExport = () => {
     if (selectedComplaints.length > 0) {
-      alert(`Bulk assign ${selectedComplaints.length} complaints`)
+      alert(`Export ${selectedComplaints.length} complaints to CSV`)
     }
   }
 
@@ -177,12 +166,12 @@ export default function AdminComplaintsPage() {
             <p className="text-gray-600 mt-2">Monitor and manage all complaints in the system</p>
           </div>
           <div className="flex space-x-3 mt-4 sm:mt-0">
-            <Button 
-              variant="outline" 
-              onClick={handleBulkAssign}
+            <Button
+              variant="outline"
+              onClick={handleBulkExport}
               disabled={selectedComplaints.length === 0}
             >
-              Bulk Assign ({selectedComplaints.length})
+              Export Selected ({selectedComplaints.length})
             </Button>
             <Link href="/admin/reports">
               <Button variant="outline">Generate Report</Button>
@@ -212,12 +201,12 @@ export default function AdminComplaintsPage() {
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-600">Unassigned</p>
-                  <p className="text-2xl font-bold text-warning">{mockComplaints.filter(c => !c.assignedTo).length}</p>
+                  <p className="text-sm text-gray-600">Pending</p>
+                  <p className="text-2xl font-bold text-warning">{mockComplaints.filter(c => c.status === 'pending').length}</p>
                 </div>
                 <div className="w-8 h-8 bg-yellow-100 rounded-full flex items-center justify-center">
                   <svg className="w-4 h-4 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                 </div>
               </div>
@@ -260,7 +249,7 @@ export default function AdminComplaintsPage() {
         {/* Filters */}
         <Card>
           <CardContent className="pt-6">
-            <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <Input
                 placeholder="Search complaints..."
                 value={searchTerm}
@@ -271,7 +260,7 @@ export default function AdminComplaintsPage() {
                   </svg>
                 }
               />
-              
+
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
@@ -282,7 +271,6 @@ export default function AdminComplaintsPage() {
                 <option value="in_progress">In Progress</option>
                 <option value="resolved">Resolved</option>
                 <option value="rejected">Rejected</option>
-                <option value="unassigned">Unassigned</option>
               </select>
 
               <select
@@ -295,23 +283,12 @@ export default function AdminComplaintsPage() {
                 ))}
               </select>
 
-              <select
-                value={assignedToFilter}
-                onChange={(e) => setAssignedToFilter(e.target.value)}
-                className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-              >
-                {officers.map(officer => (
-                  <option key={officer} value={officer}>{officer}</option>
-                ))}
-              </select>
-
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 onClick={() => {
                   setSearchTerm('')
                   setStatusFilter('')
                   setDepartmentFilter('')
-                  setAssignedToFilter('')
                 }}
               >
                 Clear Filters
@@ -392,21 +369,15 @@ export default function AdminComplaintsPage() {
                         <span>Submitted: {formatDate(complaint.submittedAt)}</span>
                         <span>Updated: {formatDate(complaint.updatedAt)}</span>
                         <span>{complaint.daysOpen} days open</span>
-                        {complaint.assignedTo ? (
-                          <span>Assigned to: <span className="font-medium">{complaint.assignedTo}</span></span>
-                        ) : (
-                          <span className="text-warning font-medium">Unassigned</span>
-                        )}
+                        <span>Category: <span className="font-medium">{complaint.category.replace('_', ' ')}</span></span>
                       </div>
                     </div>
-                    
+
                     <div className="flex flex-col space-y-2">
                       <Link href={`/admin/complaints/${complaint.id}`}>
                         <Button variant="outline" size="sm">View Details</Button>
                       </Link>
-                      {!complaint.assignedTo && (
-                        <Button variant="primary" size="sm">Assign</Button>
-                      )}
+                      <Button variant="ghost" size="sm">Contact Student</Button>
                     </div>
                   </div>
                 ))

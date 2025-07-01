@@ -62,8 +62,8 @@ export default function AdminLoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-accent to-accent-blue flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
+    <div className="min-h-screen bg-gradient-to-br from-accent to-accent-blue py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-md mx-auto">
         {/* Logo */}
         <div className="text-center mb-8">
           <Link href="/" className="inline-flex items-center space-x-2">
@@ -71,7 +71,7 @@ export default function AdminLoginPage() {
               <span className="text-white font-bold">NC</span>
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-primary">NAHPi Complains</h1>
+              <h1 className="text-2xl font-bold text-primary">NAHPi Complaints</h1>
               <p className="text-sm text-gray-600">Administrator Portal</p>
             </div>
           </Link>
