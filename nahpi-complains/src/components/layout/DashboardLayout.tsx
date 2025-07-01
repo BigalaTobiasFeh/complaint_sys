@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
+import { Footer } from '@/components/layout/Footer'
 import { cn } from '@/lib/utils'
 
 interface NavigationItem {
@@ -48,8 +49,8 @@ const adminNavigation: NavigationItem[] = [
     badge: 12,
     children: [
       { name: 'All Complaints', href: '/admin/complaints', icon: null },
-      { name: 'Unassigned', href: '/admin/complaints/unassigned', icon: null, badge: 5 },
-      { name: 'Overdue', href: '/admin/complaints/overdue', icon: null, badge: 3 }
+      { name: 'Overdue', href: '/admin/complaints/overdue', icon: null, badge: 3 },
+      { name: 'By Department', href: '/admin/complaints/departments', icon: null }
     ]
   },
   {
@@ -115,16 +116,7 @@ const departmentNavigation: NavigationItem[] = [
     ),
     badge: 8
   },
-  {
-    name: 'Assigned to Me',
-    href: '/department/assigned',
-    icon: (
-      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-      </svg>
-    ),
-    badge: 3
-  },
+
   {
     name: 'Communications',
     href: '/department/communications',
@@ -227,10 +219,10 @@ export function DashboardLayout({ children, user, notifications = 0 }: Dashboard
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 flex">
       {/* Mobile sidebar overlay */}
       {sidebarOpen && (
-        <div 
+        <div
           className="fixed inset-0 z-40 bg-gray-600 bg-opacity-75 lg:hidden"
           onClick={() => setSidebarOpen(false)}
         />
@@ -238,7 +230,7 @@ export function DashboardLayout({ children, user, notifications = 0 }: Dashboard
 
       {/* Sidebar */}
       <div className={cn(
-        "fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-lg transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0",
+        "fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-lg transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:flex-shrink-0",
         sidebarOpen ? "translate-x-0" : "-translate-x-full"
       )}>
         <div className="flex flex-col h-full">
@@ -299,9 +291,9 @@ export function DashboardLayout({ children, user, notifications = 0 }: Dashboard
       </div>
 
       {/* Main content */}
-      <div className="lg:pl-64">
+      <div className="flex-1 flex flex-col min-h-screen lg:pl-0">
         {/* Top header */}
-        <header className="bg-white shadow-sm border-b border-gray-200">
+        <header className="bg-white shadow-sm border-b border-gray-200 flex-shrink-0">
           <div className="flex items-center justify-between h-16 px-4 sm:px-6 lg:px-8">
             <Button
               variant="ghost"
@@ -321,9 +313,9 @@ export function DashboardLayout({ children, user, notifications = 0 }: Dashboard
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-5 5v-5zM12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
                 </svg>
                 {notifications > 0 && (
-                  <Badge 
-                    variant="error" 
-                    size="sm" 
+                  <Badge
+                    variant="error"
+                    size="sm"
                     className="absolute -top-1 -right-1 min-w-[1.25rem] h-5 flex items-center justify-center p-0 text-xs"
                   >
                     {notifications > 99 ? '99+' : notifications}
@@ -338,6 +330,9 @@ export function DashboardLayout({ children, user, notifications = 0 }: Dashboard
         <main className="flex-1">
           {children}
         </main>
+
+        {/* Footer */}
+        <Footer />
       </div>
     </div>
   )
