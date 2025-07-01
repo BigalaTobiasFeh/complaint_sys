@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 
 export default function LoginPage() {
   const [formData, setFormData] = useState({
-    matricule: '',
+    matricule: '',  
     password: ''
   })
   const [isLoading, setIsLoading] = useState(false)
