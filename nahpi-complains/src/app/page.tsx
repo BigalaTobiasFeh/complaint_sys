@@ -10,8 +10,12 @@ export default function Home() {
       <div
         className="absolute inset-0 bg-cover bg-center bg-no-repeat"
         style={{
-          backgroundImage: `linear-gradient(rgba(8, 56, 127, 0.8), rgba(8, 56, 127, 0.6)), url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800"><defs><linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:%23f8f9fa;stop-opacity:1" /><stop offset="100%" style="stop-color:%23e3f2fd;stop-opacity:1" /></linearGradient></defs><rect width="1200" height="800" fill="url(%23grad1)"/><circle cx="200" cy="150" r="80" fill="%23ffffff" opacity="0.1"/><circle cx="800" cy="300" r="120" fill="%23ffffff" opacity="0.05"/><circle cx="1000" cy="600" r="100" fill="%23ffffff" opacity="0.08"/><circle cx="400" cy="700" r="60" fill="%23ffffff" opacity="0.06"/></svg>')`
-        }}
+  backgroundImage: `linear-gradient(rgba(8, 56, 127, 0.8), rgba(8, 56, 127, 0.6)), url('https://images.pexels.com/photos/8199603/pexels-photo-8199603.jpeg')`,
+  backgroundSize: 'cover',
+  backgroundPosition: 'center',
+  backgroundRepeat: 'no-repeat',
+}}
+
       />
 
       {/* Content */}
