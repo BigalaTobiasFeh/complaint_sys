@@ -5,7 +5,6 @@ import Link from 'next/link'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card'
-import { Badge } from '@/components/ui/Badge'
 
 export default function LoginPage() {
   const [formData, setFormData] = useState({
@@ -91,6 +90,8 @@ export default function LoginPage() {
           </CardHeader>
           
           <CardContent>
+
+
             {/* Login Form */}
             <form onSubmit={handleSubmit} className="space-y-4">
               {errors.general && (
@@ -150,7 +151,7 @@ export default function LoginPage() {
             {/* Register Link */}
             <div className="mt-6 text-center">
               <p className="text-sm text-gray-600">
-                Don't have an account?{' '}
+                Don&apos;t have an account?{' '}
                 <Link
                   href="/register"
                   className="text-primary hover:text-primary-dark font-medium transition-colors"
