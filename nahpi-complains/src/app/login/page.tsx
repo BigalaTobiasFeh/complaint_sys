@@ -66,8 +66,8 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-accent to-accent-blue py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md mx-auto">
+    <div className="min-h-screen bg-gradient-to-br from-accent to-accent-blue py-8 px-4 sm:px-6 lg:px-8">
+      <div className="w-full max-w-[32rem] mx-auto">
         {/* Logo */}
         <div className="text-center mb-8">
           <Link href="/" className="inline-flex items-center space-x-2">
@@ -81,19 +81,19 @@ export default function LoginPage() {
           </Link>
         </div>
 
-        <Card>
+        <Card className="shadow-xl">
           <CardHeader className="text-center">
-            <CardTitle className="text-2xl">Welcome Back</CardTitle>
-            <CardDescription>
+            <CardTitle className="text-3xl font-bold">Welcome Back</CardTitle>
+            <CardDescription className="text-base mt-2">
               Sign in to your account to continue
             </CardDescription>
           </CardHeader>
-          
+
           <CardContent>
 
 
             {/* Login Form */}
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-[1.5rem]">
               {errors.general && (
                 <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
                   <p className="text-sm text-red-600">{errors.general}</p>
@@ -138,9 +138,9 @@ export default function LoginPage() {
                 </Link>
               </div>
 
-              <Button 
-                type="submit" 
-                className="w-full" 
+              <Button
+                type="submit"
+                className="w-full h-[3rem] text-base font-semibold"
                 size="lg"
                 isLoading={isLoading}
               >
@@ -149,7 +149,7 @@ export default function LoginPage() {
             </form>
 
             {/* Register Link */}
-            <div className="mt-6 text-center">
+            <div className="mt-[2rem] text-center">
               <p className="text-sm text-gray-600">
                 Don&apos;t have an account?{' '}
                 <Link

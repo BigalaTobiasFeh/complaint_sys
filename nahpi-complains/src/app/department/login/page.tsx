@@ -62,8 +62,8 @@ export default function DepartmentLoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-accent to-accent-blue py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md mx-auto">
+    <div className="min-h-screen bg-gradient-to-br from-accent to-accent-blue py-8 px-4 sm:px-6 lg:px-8">
+      <div className="w-full max-w-[32rem] mx-auto">
         {/* Logo */}
         <div className="text-center mb-8">
           <Link href="/" className="inline-flex items-center space-x-2">
@@ -77,21 +77,21 @@ export default function DepartmentLoginPage() {
           </Link>
         </div>
 
-        <Card>
+        <Card className="shadow-xl">
           <CardHeader className="text-center">
-            <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
-              <svg className="w-8 h-8 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-6">
+              <svg className="w-10 h-10 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2-2v2m8 0V6a2 2 0 012 2v6a2 2 0 01-2 2H8a2 2 0 01-2-2V8a2 2 0 012-2V6" />
               </svg>
             </div>
-            <CardTitle className="text-2xl">Department Officer Login</CardTitle>
-            <CardDescription>
+            <CardTitle className="text-3xl font-bold">Department Officer Login</CardTitle>
+            <CardDescription className="text-base mt-2">
               Access your department dashboard to manage and respond to complaints
             </CardDescription>
           </CardHeader>
-          
+
           <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-[1.5rem]">
               {errors.general && (
                 <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
                   <p className="text-sm text-red-600">{errors.general}</p>
@@ -137,9 +137,9 @@ export default function DepartmentLoginPage() {
                 </Link>
               </div>
 
-              <Button 
-                type="submit" 
-                className="w-full" 
+              <Button
+                type="submit"
+                className="w-full h-[3rem] text-base font-semibold"
                 size="lg"
                 isLoading={isLoading}
               >
@@ -148,7 +148,7 @@ export default function DepartmentLoginPage() {
             </form>
 
             {/* Department Info */}
-            <div className="mt-6 p-3 bg-green-50 border border-green-200 rounded-lg">
+            <div className="mt-[2rem] p-[1rem] bg-green-50 border border-green-200 rounded-lg">
               <div className="flex items-start space-x-2">
                 <svg className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />

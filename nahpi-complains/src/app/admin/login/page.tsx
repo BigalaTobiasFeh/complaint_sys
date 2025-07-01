@@ -62,8 +62,8 @@ export default function AdminLoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-accent to-accent-blue py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md mx-auto">
+    <div className="min-h-screen bg-gradient-to-br from-accent to-accent-blue py-8 px-4 sm:px-6 lg:px-8">
+      <div className="w-full max-w-[32rem] mx-auto">
         {/* Logo */}
         <div className="text-center mb-8">
           <Link href="/" className="inline-flex items-center space-x-2">
@@ -77,21 +77,21 @@ export default function AdminLoginPage() {
           </Link>
         </div>
 
-        <Card>
+        <Card className="shadow-xl">
           <CardHeader className="text-center">
-            <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
-              <svg className="w-8 h-8 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-6">
+              <svg className="w-10 h-10 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
               </svg>
             </div>
-            <CardTitle className="text-2xl">Administrator Login</CardTitle>
-            <CardDescription>
+            <CardTitle className="text-3xl font-bold">Administrator Login</CardTitle>
+            <CardDescription className="text-base mt-2">
               Access the administrative dashboard to manage the complaint system
             </CardDescription>
           </CardHeader>
-          
+
           <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-[1.5rem]">
               {errors.general && (
                 <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
                   <p className="text-sm text-red-600">{errors.general}</p>
@@ -137,9 +137,9 @@ export default function AdminLoginPage() {
                 </Link>
               </div>
 
-              <Button 
-                type="submit" 
-                className="w-full" 
+              <Button
+                type="submit"
+                className="w-full h-[3rem] text-base font-semibold"
                 size="lg"
                 isLoading={isLoading}
               >
@@ -148,7 +148,7 @@ export default function AdminLoginPage() {
             </form>
 
             {/* Security Notice */}
-            <div className="mt-6 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+            <div className="mt-[2rem] p-[1rem] bg-blue-50 border border-blue-200 rounded-lg">
               <div className="flex items-start space-x-2">
                 <svg className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />

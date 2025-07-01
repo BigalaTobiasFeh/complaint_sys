@@ -133,8 +133,8 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-accent to-accent-blue py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md mx-auto">
+    <div className="min-h-screen bg-gradient-to-br from-accent to-accent-blue py-8 px-4 sm:px-6 lg:px-8">
+      <div className="w-full max-w-[32rem] mx-auto">
         <div className="text-center mb-8">
           <Link href="/" className="inline-flex items-center space-x-2">
             <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
@@ -147,10 +147,10 @@ export default function RegisterPage() {
           </Link>
         </div>
 
-        <Card>
+        <Card className="shadow-xl">
           <CardHeader className="text-center">
-            <CardTitle className="text-2xl">Create Account</CardTitle>
-            <CardDescription>
+            <CardTitle className="text-3xl font-bold">Create Account</CardTitle>
+            <CardDescription className="text-base mt-2">
               Register as a student to submit and track complaints
             </CardDescription>
             <div className="flex justify-center mt-4">
@@ -178,7 +178,7 @@ export default function RegisterPage() {
             )}
 
             {step === 1 ? (
-              <div className="space-y-4">
+              <div className="space-y-[1.5rem]">
                 <Input
                   label="Full Name"
                   name="name"
@@ -217,26 +217,26 @@ export default function RegisterPage() {
                   placeholder="Enter your phone number"
                 />
 
-                <Button 
+                <Button
                   type="button"
                   onClick={handleNext}
-                  className="w-full" 
+                  className="w-full h-[3rem] text-base font-semibold"
                   size="lg"
                 >
                   Next Step
                 </Button>
               </div>
             ) : (
-              <form onSubmit={handleSubmit} className="space-y-4">
+              <form onSubmit={handleSubmit} className="space-y-[1.5rem]">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-base font-medium text-gray-700 mb-[0.5rem]">
                     Department
                   </label>
                   <select
                     name="department"
                     value={formData.department}
                     onChange={handleInputChange}
-                    className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                    className="block w-full rounded-lg border border-gray-300 px-[1rem] py-[0.75rem] text-base focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
                   >
                     <option value="">Select your department</option>
                     {departments.map(dept => (
@@ -249,14 +249,14 @@ export default function RegisterPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-base font-medium text-gray-700 mb-[0.5rem]">
                     Year of Study
                   </label>
                   <select
                     name="yearOfStudy"
                     value={formData.yearOfStudy}
                     onChange={handleInputChange}
-                    className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                    className="block w-full rounded-lg border border-gray-300 px-[1rem] py-[0.75rem] text-base focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
                   >
                     <option value="">Select year of study</option>
                     <option value="1">Year 1</option>
@@ -271,14 +271,14 @@ export default function RegisterPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-base font-medium text-gray-700 mb-[0.5rem]">
                     Academic Year
                   </label>
                   <select
                     name="academicYear"
                     value={formData.academicYear}
                     onChange={handleInputChange}
-                    className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                    className="block w-full rounded-lg border border-gray-300 px-[1rem] py-[0.75rem] text-base focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
                   >
                     <option value="">Select academic year</option>
                     {academicYears.map(year => (
@@ -312,17 +312,17 @@ export default function RegisterPage() {
                 />
 
                 <div className="flex space-x-3">
-                  <Button 
+                  <Button
                     type="button"
                     variant="outline"
                     onClick={() => setStep(1)}
-                    className="flex-1"
+                    className="flex-1 h-[3rem] text-base font-semibold"
                   >
                     Back
                   </Button>
-                  <Button 
-                    type="submit" 
-                    className="flex-1" 
+                  <Button
+                    type="submit"
+                    className="flex-1 h-[3rem] text-base font-semibold"
                     isLoading={isLoading}
                   >
                     {isLoading ? 'Creating Account...' : 'Create Account'}
@@ -331,7 +331,7 @@ export default function RegisterPage() {
               </form>
             )}
 
-            <div className="mt-6 text-center">
+            <div className="mt-[2rem] text-center">
               <p className="text-sm text-gray-600">
                 Already have an account?{' '}
                 <Link 
