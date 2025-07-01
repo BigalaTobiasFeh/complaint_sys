@@ -22,7 +22,6 @@ const mockComplaints = [
     complaintId: 'CMP-2024-145',
     title: 'CA Mark Discrepancy in Data Structures',
     student: { name: 'Alice Johnson', email: 'alice.johnson@student.nahpi.edu', matricule: 'STU2024001' },
-    assignedTo: 'Dr. Michael Chen',
     status: 'pending' as const,
     priority: 'high' as const,
     submittedAt: new Date('2024-01-20'),
@@ -40,7 +39,6 @@ const mockComplaints = [
     complaintId: 'CMP-2024-142',
     title: 'Exam Mark Query for Algorithms',
     student: { name: 'Bob Smith', email: 'bob.smith@student.nahpi.edu', matricule: 'STU2024002' },
-    assignedTo: 'Dr. Michael Chen',
     status: 'in_progress' as const,
     priority: 'medium' as const,
     submittedAt: new Date('2024-01-18'),
@@ -58,7 +56,6 @@ const mockComplaints = [
     complaintId: 'CMP-2024-138',
     title: 'Missing Assignment Grade',
     student: { name: 'Carol Davis', email: 'carol.davis@student.nahpi.edu', matricule: 'STU2024003' },
-    assignedTo: 'Dr. Sarah Wilson',
     status: 'pending' as const,
     priority: 'low' as const,
     submittedAt: new Date('2024-01-15'),
@@ -76,7 +73,6 @@ const mockComplaints = [
     complaintId: 'CMP-2024-135',
     title: 'Course Material Access Issue',
     student: { name: 'David Brown', email: 'david.brown@student.nahpi.edu', matricule: 'STU2024004' },
-    assignedTo: 'Dr. Michael Chen',
     status: 'resolved' as const,
     priority: 'medium' as const,
     submittedAt: new Date('2024-01-12'),
@@ -131,7 +127,6 @@ export default function DepartmentComplaintsPage() {
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState('')
   const [priorityFilter, setPriorityFilter] = useState('')
-  const [assignmentFilter, setAssignmentFilter] = useState('')
 
   // Filter complaints for this department
   const departmentComplaints = mockComplaints
@@ -141,21 +136,16 @@ export default function DepartmentComplaintsPage() {
                          complaint.complaintId.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          complaint.student.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          complaint.courseCode.toLowerCase().includes(searchTerm.toLowerCase())
-    
+
     const matchesStatus = !statusFilter || complaint.status === statusFilter
     const matchesPriority = !priorityFilter || complaint.priority === priorityFilter
-    const matchesAssignment = !assignmentFilter || 
-                             (assignmentFilter === 'assigned_to_me' && complaint.assignedTo === mockUser.name) ||
-                             (assignmentFilter === 'unassigned' && !complaint.assignedTo) ||
-                             (assignmentFilter === 'all')
 
-    return matchesSearch && matchesStatus && matchesPriority && matchesAssignment
+    return matchesSearch && matchesStatus && matchesPriority
   })
 
-  const myAssignedComplaints = departmentComplaints.filter(c => c.assignedTo === mockUser.name)
-  const pendingComplaints = myAssignedComplaints.filter(c => c.status === 'pending')
-  const inProgressComplaints = myAssignedComplaints.filter(c => c.status === 'in_progress')
-  const overdueComplaints = myAssignedComplaints.filter(c => c.isOverdue)
+  const pendingComplaints = departmentComplaints.filter(c => c.status === 'pending')
+  const inProgressComplaints = departmentComplaints.filter(c => c.status === 'in_progress')
+  const overdueComplaints = departmentComplaints.filter(c => c.isOverdue)
 
   return (
     <DashboardLayout user={mockUser} notifications={8}>
@@ -188,12 +178,12 @@ export default function DepartmentComplaintsPage() {
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-600">Assigned to Me</p>
-                  <p className="text-2xl font-bold text-primary">{myAssignedComplaints.length}</p>
+                  <p className="text-sm text-gray-600">In Progress</p>
+                  <p className="text-2xl font-bold text-primary">{inProgressComplaints.length}</p>
                 </div>
                 <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center">
                   <svg className="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                 </div>
               </div>
@@ -236,7 +226,7 @@ export default function DepartmentComplaintsPage() {
         {/* Filters */}
         <Card>
           <CardContent className="pt-6">
-            <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <Input
                 placeholder="Search complaints..."
                 value={searchTerm}
@@ -247,7 +237,7 @@ export default function DepartmentComplaintsPage() {
                   </svg>
                 }
               />
-              
+
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
@@ -271,23 +261,12 @@ export default function DepartmentComplaintsPage() {
                 <option value="low">Low Priority</option>
               </select>
 
-              <select
-                value={assignmentFilter}
-                onChange={(e) => setAssignmentFilter(e.target.value)}
-                className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-              >
-                <option value="">All Assignments</option>
-                <option value="assigned_to_me">Assigned to Me</option>
-                <option value="unassigned">Unassigned</option>
-              </select>
-
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 onClick={() => {
                   setSearchTerm('')
                   setStatusFilter('')
                   setPriorityFilter('')
-                  setAssignmentFilter('')
                 }}
               >
                 Clear Filters
@@ -363,10 +342,10 @@ export default function DepartmentComplaintsPage() {
                     <div className="flex flex-col space-y-2 ml-4">
                       <Link href={`/department/complaints/${complaint.id}`}>
                         <Button variant="primary" size="sm">
-                          {complaint.assignedTo === mockUser.name ? 'Respond' : 'View Details'}
+                          View Details
                         </Button>
                       </Link>
-                      {complaint.assignedTo === mockUser.name && complaint.status !== 'resolved' && (
+                      {complaint.status !== 'resolved' && (
                         <Button variant="outline" size="sm">
                           Update Status
                         </Button>
@@ -386,9 +365,9 @@ export default function DepartmentComplaintsPage() {
               <CardTitle>Quick Actions</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              <Link href="/department/assigned">
+              <Link href="/department/complaints">
                 <Button className="w-full justify-start">
-                  View My Assignments ({myAssignedComplaints.length})
+                  View All Complaints ({departmentComplaints.length})
                 </Button>
               </Link>
               <Link href="/department/communications">

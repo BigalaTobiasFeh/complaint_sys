@@ -18,7 +18,6 @@ const mockUser = {
 
 const mockStats = {
   departmentComplaints: 34,
-  assignedToMe: 12,
   pendingComplaints: 8,
   inProgressComplaints: 4,
   resolvedComplaints: 20,
@@ -28,7 +27,7 @@ const mockStats = {
   resolutionRate: 85
 }
 
-const mockAssignedComplaints = [
+const mockDepartmentComplaints = [
   {
     id: '1',
     complaintId: 'CMP-2024-145',
@@ -166,11 +165,11 @@ export default function DepartmentDashboard() {
 
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600">Assigned to Me</CardTitle>
+              <CardTitle className="text-sm font-medium text-gray-600">In Progress</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-primary">{mockStats.assignedToMe}</div>
-              <p className="text-xs text-gray-500 mt-1">Active assignments</p>
+              <div className="text-2xl font-bold text-primary">{mockStats.inProgressComplaints}</div>
+              <p className="text-xs text-gray-500 mt-1">Being processed</p>
             </CardContent>
           </Card>
 
@@ -230,12 +229,12 @@ export default function DepartmentDashboard() {
               <CardDescription>Common tasks</CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
-              <Link href="/department/assigned">
+              <Link href="/department/complaints">
                 <Button className="w-full justify-start" variant="primary">
                   <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                   </svg>
-                  View My Assignments
+                  View All Complaints
                 </Button>
               </Link>
               
@@ -270,23 +269,23 @@ export default function DepartmentDashboard() {
           </Card>
         </div>
 
-        {/* Assigned Complaints & Recent Activity */}
+        {/* Department Complaints & Recent Activity */}
         <div className="grid lg:grid-cols-2 gap-6">
           <Card>
             <CardHeader>
               <div className="flex items-center justify-between">
                 <div>
-                  <CardTitle>My Assigned Complaints</CardTitle>
-                  <CardDescription>Complaints requiring your attention</CardDescription>
+                  <CardTitle>Recent Department Complaints</CardTitle>
+                  <CardDescription>Latest complaints for your department</CardDescription>
                 </div>
-                <Link href="/department/assigned">
+                <Link href="/department/complaints">
                   <Button variant="outline" size="sm">View All</Button>
                 </Link>
               </div>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {mockAssignedComplaints.map((complaint) => (
+                {mockDepartmentComplaints.map((complaint) => (
                   <div key={complaint.id} className="flex items-center justify-between p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
                     <div className="flex-1">
                       <div className="flex items-center space-x-2 mb-1">
@@ -311,7 +310,7 @@ export default function DepartmentDashboard() {
                       </div>
                     </div>
                     <Link href={`/department/complaints/${complaint.id}`}>
-                      <Button variant="ghost" size="sm">Respond</Button>
+                      <Button variant="ghost" size="sm">View Details</Button>
                     </Link>
                   </div>
                 ))}
