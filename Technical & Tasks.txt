@@ -13,11 +13,11 @@ color code: #08387F
         ◦ Manage user accounts (Block student accounts, Create departments and department accounts)
         ◦ Login (With Email/Username and Password)
         ◦ Set Datelines for submissions
-        ◦ Assign complaints to staff
+        ◦ View all complaints, details and status
         ◦ Monitor resolution process
         ◦ Generate reports 
     3. Department Officer
-        ◦ View complaints submitted to the respective department.(This is chosen on the complaint form and the when the student submits the complaint, it automatically goes to the department chosen on the form)
+        ◦ View complaints submitted to the respective department.(This is chosen on the complaint form and then when the student submits the complaint, it automatically goes to the department chosen on the form)
         ◦ Login (With Email/Username and Password)
         ◦ System sends a message to the Department officer’s email, at a particular time of the day let’s say (5:00pm), about the number of complaints which have been submitted for that day
         ◦ Respond and update status
