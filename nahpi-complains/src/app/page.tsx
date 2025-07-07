@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Header } from "@/components/layout/Header";
 import { Button } from "@/components/ui/Button";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/Card";
+// import ubaImage from './uba.png';
 
 export default function Home() {
   return (
@@ -10,7 +11,8 @@ export default function Home() {
       <div
         className="absolute inset-0 bg-cover bg-center bg-no-repeat"
         style={{
-  backgroundImage: `linear-gradient(rgba(8, 56, 127, 0.8), rgba(8, 56, 127, 0.6)), url('https://images.pexels.com/photos/8199603/pexels-photo-8199603.jpeg')`,
+  //  backgroundImage: `linear-gradient(rgba(8, 56, 127, 0.8), rgba(8, 56, 127, 0.1)), url(${ubaImage})`,        
+  backgroundImage: `linear-gradient(rgba(8, 56, 127, 0.8), rgba(8, 56, 127, 0.6)), url('https://ubastudent.online/images/bam.png')`,
   backgroundSize: 'cover',
   backgroundPosition: 'center',
   backgroundRepeat: 'no-repeat',
