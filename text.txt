@@ -16,4 +16,4 @@ Would you like me to proceed with implementing the complaint submission and mana
 
 
 Logout functionality
-Work on the student portal, Make sure there is no page of the student portal using mock data, and also make sure you update or delete the tabs page to represent or to be the pages which have actural database data. Remove any useless page or duplicate page. Also implement the logout functionality for the student page. 
+Now lets work on the student portal and make it superd, Make sure there is no page of the student portal using mock data, and also make sure you update or delete the tabs page to represent or to be the pages which have actural database data. Remove any useless page or duplicate page. Also implement the logout functionality for the student page. And a student is unable to submit a complaint with a file attached, looks like we need to look for a proper way to handle this. 
