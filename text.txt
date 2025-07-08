@@ -1,1 +1,19 @@
 I want to build a Use this color #08387F and white then you can add any other color which will blend (but very very minimal use). Make sure you make the interfaces to be responsive (So that the website will look good on all like screens like desktop and mobile apps). First of all, Let's do the frontend with reactjs and tailwind css. Make sure each user has their own login interface and also make sure you implement the front end based on the user and system requirements in the document 'Technical & Tasks.txt'. You are free to give suggestions on how to improve the requirements and also how to implement the system. Make sure the front end is completely functional then we can move to the backend
+
+
+
+project name: nahpi
+database url: https://qbxgswcslywltbuoqnbv.supabase.co
+anon public : eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFieGdzd2NzbHl3bHRidW9xbmJ2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTE5Njc3MjMsImV4cCI6MjA2NzU0MzcyM30.2pNYsPgki4BRmdAahh7-a8i8xAnfz38cTRPe2FoHO4Q
+
+service role secret: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFieGdzd2NzbHl3bHRidW9xbmJ2Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1MTk2NzcyMywiZXhwIjoyMDY3NTQzNzIzfQ.OU42jvoZJN24Vr5pIHaOMPqjyl6w8NuL3gedOKHoHFc
+
+
+Matricule format
+'UBa<last_two_digits_of_year><any_capital_letter><four_digits>' for example 'UBa25T1000' 
+
+Would you like me to proceed with implementing the complaint submission and management features, or would you prefer to test the authentication system first?
+
+
+Logout functionality
+Work on the student portal, Make sure there is no page of the student portal using mock data, and also make sure you update or delete the tabs page to represent or to be the pages which have actural database data. Remove any useless page or duplicate page. Also implement the logout functionality for the student page. 

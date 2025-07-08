@@ -57,10 +57,8 @@ color code: #08387F
 🛠️ Technologies You Can Use:
 Layer
 Suggested Tech Stack
-Frontend: HTML, tailwind CSS,React
-Backend:Python (Django/Flask)
-Database: PostgreSQL
-Authentication: JWT
+Frontend: HTML, tailwind CSS,React with Nextjs
+Backend:Supabase
 
 COMPLAINT FORM
 Name of Student:……………………………………………………….	
@@ -75,7 +73,21 @@ Description: …………………………………………………………�
 
 
 
+The departments are:
+    -Centre for Cybersecurity and Mathematical Cryptology - CMC
+    -Chemical and Biological Engineering - CBE
+    -Civil Engineering and Architecture - CVL
+    -Computer Engineering  - COM
+    -Electrical and Electronics Engineering - EEEE
+    -Mechanical and Industrial Engineering - MEC
+    -Mining and Mineral Engineering - MIN
+    -Petroleum Engineering - PET
 
 
 
+admin - admin123
+dept - dept123
+stu - student123
 
+
+admin01@nahpi.edu - admin123
