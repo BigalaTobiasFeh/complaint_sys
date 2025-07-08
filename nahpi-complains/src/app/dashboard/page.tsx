@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useCallback } from 'react'
 import Link from 'next/link'
 import { Header } from '@/components/layout/Header'
 import { Footer } from '@/components/layout/Footer'
@@ -11,42 +11,7 @@ import { useAuth } from '@/contexts/AuthContext'
 import { supabase } from '@/lib/supabase'
 import { ComplaintService } from '@/lib/complaints'
 
-const mockStats = {
-  totalComplaints: 5,
-  pendingComplaints: 2,
-  resolvedComplaints: 2,
-  rejectedComplaints: 1
-}
-
-const mockRecentComplaints = [
-  {
-    id: '1',
-    complaintId: 'CMP-2024-001',
-    title: 'CA Mark Discrepancy in Mathematics',
-    status: 'pending' as const,
-    submittedAt: new Date('2024-01-15'),
-    courseCode: 'MATH101',
-    category: 'ca_mark' as const
-  },
-  {
-    id: '2',
-    complaintId: 'CMP-2024-002',
-    title: 'Exam Mark Query for Physics',
-    status: 'in_progress' as const,
-    submittedAt: new Date('2024-01-10'),
-    courseCode: 'PHYS201',
-    category: 'exam_mark' as const
-  },
-  {
-    id: '3',
-    complaintId: 'CMP-2024-003',
-    title: 'Course Registration Issue',
-    status: 'resolved' as const,
-    submittedAt: new Date('2024-01-05'),
-    courseCode: 'CS301',
-    category: 'other' as const
-  }
-]
+// Mock data removed - using real database queries
 
 function getStatusColor(status: string) {
   switch (status) {
@@ -73,19 +38,29 @@ function formatDate(date: Date) {
 
 export default function StudentDashboard() {
   const { user, studentProfile, loading } = useAuth()
-  const [stats, setStats] = useState(mockStats)
-  const [recentComplaints, setRecentComplaints] = useState(mockRecentComplaints)
+  const [stats, setStats] = useState({
+    totalComplaints: 0,
+    pendingComplaints: 0,
+    resolvedComplaints: 0,
+    rejectedComplaints: 0
+  })
+  const [recentComplaints, setRecentComplaints] = useState<{
+    id: string
+    complaintId: string
+    title: string
+    status: string
+    submittedAt: Date
+    courseCode: string
+    category: string
+  }[]>([])
+  const [isLoadingData, setIsLoadingData] = useState(true)
 
-  useEffect(() => {
-    if (user && studentProfile) {
-      loadDashboardData()
-    }
-  }, [user, studentProfile])
-
-  const loadDashboardData = async () => {
+  const loadDashboardData = useCallback(async () => {
     if (!user) return
 
     try {
+      setIsLoadingData(true)
+
       // Load user's complaints using the complaint service
       const complaintsResult = await ComplaintService.getStudentComplaints(user.id)
 
@@ -120,8 +95,16 @@ export default function StudentDashboard() {
       }
     } catch (error) {
       console.error('Error loading dashboard data:', error)
+    } finally {
+      setIsLoadingData(false)
     }
-  }
+  }, [user])
+
+  useEffect(() => {
+    if (user && studentProfile) {
+      loadDashboardData()
+    }
+  }, [user, studentProfile, loadDashboardData])
 
   if (loading) {
     return (
