@@ -2,11 +2,14 @@
 
 import React, { useState } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card'
+import { AuthService } from '@/lib/auth'
 
 export default function RegisterPage() {
+  const router = useRouter()
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -24,16 +27,14 @@ export default function RegisterPage() {
   const [step, setStep] = useState(1)
 
   const departments = [
-    'Computer Science',
-    'Information Technology',
-    'Software Engineering',
-    'Electrical Engineering',
-    'Mechanical Engineering',
-    'Civil Engineering',
-    'Business Administration',
-    'Accounting',
-    'Marketing',
-    'Economics'
+    'Centre for Cybersecurity and Mathematical Cryptology',
+    'Chemical and Biological Engineering',
+    'Civil Engineering and Architecture',
+    'Computer Engineering',
+    'Electrical and Electronics Engineering',
+    'Mechanical and Industrial Engineering',
+    'Mining and Mineral Engineering',
+    'Petroleum Engineering'
   ]
 
   const currentYear = new Date().getFullYear()
@@ -66,6 +67,8 @@ export default function RegisterPage() {
 
     if (!formData.matricule.trim()) {
       newErrors.matricule = 'Matricule number is required'
+    } else if (!/^UBa\d{2}[A-Z]\d{4}$/.test(formData.matricule)) {
+      newErrors.matricule = 'Matricule must follow format: UBa25T1000 (UBa + year + letter + 4 digits)'
     }
 
     if (!formData.phoneNumber.trim()) {
@@ -115,15 +118,31 @@ export default function RegisterPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    
+
     if (!validateStep2()) return
 
     setIsLoading(true)
-    
+
     try {
-      await new Promise(resolve => setTimeout(resolve, 2000))
-      console.log('Registration attempt:', formData)
-      alert('Registration successful! Please check your email/phone for verification.')
+      const result = await AuthService.registerStudent({
+        name: formData.name,
+        email: formData.email,
+        matricule: formData.matricule,
+        department: formData.department,
+        yearOfStudy: parseInt(formData.yearOfStudy),
+        phoneNumber: formData.phoneNumber,
+        academicYear: formData.academicYear,
+        password: formData.password,
+        confirmPassword: formData.confirmPassword,
+        verificationMethod: formData.verificationMethod
+      })
+
+      if (result.success) {
+        alert('Registration successful! Please check your email for verification, then you can login.')
+        router.push('/login')
+      } else {
+        setErrors({ general: result.error || 'Registration failed. Please try again.' })
+      }
     } catch (error) {
       console.error('Registration error:', error)
       setErrors({ general: 'Registration failed. Please try again.' })
@@ -204,7 +223,8 @@ export default function RegisterPage() {
                   value={formData.matricule}
                   onChange={handleInputChange}
                   error={errors.matricule}
-                  placeholder="Enter your matricule number"
+                  placeholder="e.g., UBa25T1000"
+                  helperText="Format: UBa + year + letter + 4 digits"
                 />
 
                 <Input

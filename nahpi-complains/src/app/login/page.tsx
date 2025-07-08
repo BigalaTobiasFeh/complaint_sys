@@ -2,13 +2,17 @@
 
 import React, { useState } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card'
+import { useAuth } from '@/contexts/AuthContext'
 
 export default function LoginPage() {
+  const router = useRouter()
+  const { login } = useAuth()
   const [formData, setFormData] = useState({
-    matricule: '',  
+    matricule: '',
     password: ''
   })
   const [isLoading, setIsLoading] = useState(false)
@@ -28,6 +32,8 @@ export default function LoginPage() {
 
     if (!formData.matricule.trim()) {
       newErrors.matricule = 'Matricule is required'
+    } else if (!/^UBa\d{2}[A-Z]\d{4}$/.test(formData.matricule)) {
+      newErrors.matricule = 'Invalid matricule format (e.g., UBa25T1000)'
     }
 
     if (!formData.password.trim()) {
@@ -42,21 +48,23 @@ export default function LoginPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    
+
     if (!validateForm()) return
 
     setIsLoading(true)
-    
+
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 2000))
+      const result = await login({
+        matricule: formData.matricule,
+        password: formData.password,
+        userType: 'student'
+      })
 
-      // Here you would make the actual API call
-      console.log('Student login attempt:', formData)
-
-      // In a real app, you would redirect here
-      alert('Login successful! Redirecting to student dashboard')
-
+      if (result.success) {
+        router.push('/dashboard')
+      } else {
+        setErrors({ general: result.error || 'Login failed. Please check your credentials and try again.' })
+      }
     } catch (error) {
       console.error('Login error:', error)
       setErrors({ general: 'Login failed. Please check your credentials and try again.' })
@@ -106,7 +114,7 @@ export default function LoginPage() {
                 value={formData.matricule}
                 onChange={handleInputChange}
                 error={errors.matricule}
-                placeholder="Enter your matricule number"
+                placeholder="e.g., UBa25T1000"
                 leftIcon={
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V4a2 2 0 00-2-2v2m0 0V4a2 2 0 012-2h2a2 2 0 012 2v2" />

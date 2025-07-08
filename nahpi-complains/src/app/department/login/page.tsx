@@ -2,11 +2,15 @@
 
 import React, { useState } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card'
+import { useAuth } from '@/contexts/AuthContext'
 
 export default function DepartmentLoginPage() {
+  const router = useRouter()
+  const { login } = useAuth()
   const [formData, setFormData] = useState({
     email: '',
     password: ''
@@ -43,16 +47,23 @@ export default function DepartmentLoginPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    
+
     if (!validateForm()) return
 
     setIsLoading(true)
-    
+
     try {
-      await new Promise(resolve => setTimeout(resolve, 2000))
-      console.log('Department officer login attempt:', formData)
-      alert('Department officer login successful! Redirecting to department dashboard')
-      // In a real app, redirect to /department/dashboard
+      const result = await login({
+        email: formData.email,
+        password: formData.password,
+        userType: 'department_officer'
+      })
+
+      if (result.success) {
+        router.push('/department/dashboard')
+      } else {
+        setErrors({ general: result.error || 'Login failed. Please check your credentials and try again.' })
+      }
     } catch (error) {
       console.error('Login error:', error)
       setErrors({ general: 'Login failed. Please check your credentials and try again.' })
