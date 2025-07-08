@@ -1,5 +1,6 @@
 // User Types
 export type UserRole = 'student' | 'admin' | 'department_officer'
+export type NotificationType = 'complaint_submitted' | 'complaint_updated' | 'complaint_assigned' | 'complaint_resolved' | 'deadline_reminder'
 
 export interface User {
   id: string
@@ -111,8 +112,7 @@ export interface Department {
   createdAt: Date
 }
 
-// Notification Types
-export type NotificationType = 'complaint_submitted' | 'complaint_assigned' | 'complaint_updated' | 'complaint_resolved' | 'deadline_reminder'
+// Notification Types (removed duplicate - already defined at top)
 
 export interface Notification {
   id: string
