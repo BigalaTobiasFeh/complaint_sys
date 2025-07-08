@@ -1,93 +1,41 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { DashboardLayout } from '@/components/layout/DashboardLayout'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
-import { Input } from '@/components/ui/Input'
 import { Badge } from '@/components/ui/Badge'
+import { Input } from '@/components/ui/Input'
+import { Select } from '@/components/ui/Select'
+import { useAuth } from '@/contexts/AuthContext'
+import { ComplaintService } from '@/lib/complaints'
+import { supabase } from '@/lib/supabase'
+import { ComplaintStatus, ComplaintCategory } from '@/types'
 
-const mockUser = {
-  name: 'Dr. Michael Chen',
-  role: 'department_officer' as const,
-  email: 'michael.chen@nahpi.edu',
-  department: 'Computer Science Department',
-  avatar: undefined
-}
-
-const mockComplaints = [
-  {
-    id: '1',
-    complaintId: 'CMP-2024-145',
-    title: 'CA Mark Discrepancy in Data Structures',
-    student: { name: 'Alice Johnson', email: 'alice.johnson@student.nahpi.edu', matricule: 'STU2024001' },
-    status: 'pending' as const,
-    priority: 'high' as const,
-    submittedAt: new Date('2024-01-20'),
-    updatedAt: new Date('2024-01-20'),
-    courseCode: 'CS301',
-    courseTitle: 'Data Structures and Algorithms',
-    category: 'ca_mark' as const,
-    isOverdue: false,
-    daysOpen: 1,
-    lastResponse: null,
-    hasUnreadMessages: true
-  },
-  {
-    id: '2',
-    complaintId: 'CMP-2024-142',
-    title: 'Exam Mark Query for Algorithms',
-    student: { name: 'Bob Smith', email: 'bob.smith@student.nahpi.edu', matricule: 'STU2024002' },
-    status: 'in_progress' as const,
-    priority: 'medium' as const,
-    submittedAt: new Date('2024-01-18'),
-    updatedAt: new Date('2024-01-19'),
-    courseCode: 'CS401',
-    courseTitle: 'Advanced Algorithms',
-    category: 'exam_mark' as const,
-    isOverdue: false,
-    daysOpen: 3,
-    lastResponse: new Date('2024-01-19'),
-    hasUnreadMessages: false
-  },
-  {
-    id: '3',
-    complaintId: 'CMP-2024-138',
-    title: 'Missing Assignment Grade',
-    student: { name: 'Carol Davis', email: 'carol.davis@student.nahpi.edu', matricule: 'STU2024003' },
-    status: 'pending' as const,
-    priority: 'low' as const,
-    submittedAt: new Date('2024-01-15'),
-    updatedAt: new Date('2024-01-15'),
-    courseCode: 'CS201',
-    courseTitle: 'Programming Fundamentals',
-    category: 'ca_mark' as const,
-    isOverdue: true,
-    daysOpen: 6,
-    lastResponse: null,
-    hasUnreadMessages: true
-  },
-  {
-    id: '4',
-    complaintId: 'CMP-2024-135',
-    title: 'Course Material Access Issue',
-    student: { name: 'David Brown', email: 'david.brown@student.nahpi.edu', matricule: 'STU2024004' },
-    status: 'resolved' as const,
-    priority: 'medium' as const,
-    submittedAt: new Date('2024-01-12'),
-    updatedAt: new Date('2024-01-16'),
-    courseCode: 'CS101',
-    courseTitle: 'Introduction to Computer Science',
-    category: 'other' as const,
-    isOverdue: false,
-    daysOpen: 9,
-    lastResponse: new Date('2024-01-16'),
-    hasUnreadMessages: false
-  }
+const statusOptions = [
+  { value: '', label: 'All Status' },
+  { value: 'pending', label: 'Pending' },
+  { value: 'in_progress', label: 'In Progress' },
+  { value: 'resolved', label: 'Resolved' },
+  { value: 'rejected', label: 'Rejected' }
 ]
 
-function getStatusColor(status: string) {
+const categoryOptions = [
+  { value: '', label: 'All Categories' },
+  { value: 'ca_mark', label: 'CA Mark' },
+  { value: 'exam_mark', label: 'Exam Mark' },
+  { value: 'other', label: 'Other' }
+]
+
+const priorityOptions = [
+  { value: '', label: 'All Priorities' },
+  { value: 'low', label: 'Low' },
+  { value: 'medium', label: 'Medium' },
+  { value: 'high', label: 'High' }
+]
+
+function getStatusColor(status: ComplaintStatus) {
   switch (status) {
     case 'pending':
       return 'warning'
@@ -109,12 +57,11 @@ function getPriorityColor(priority: string) {
     case 'medium':
       return 'warning'
     case 'low':
-      return 'secondary'
+      return 'success'
     default:
       return 'default'
   }
 }
-
 function formatDate(date: Date) {
   return date.toLocaleDateString('en-US', {
     year: 'numeric',
@@ -123,37 +70,168 @@ function formatDate(date: Date) {
   })
 }
 
+function getCategoryLabel(category: ComplaintCategory) {
+  switch (category) {
+    case 'ca_mark':
+      return 'CA Mark'
+    case 'exam_mark':
+      return 'Exam Mark'
+    case 'other':
+      return 'Other'
+    default:
+      return category
+  }
+}
+
+
+
 export default function DepartmentComplaintsPage() {
+  const { user } = useAuth()
+  const [complaints, setComplaints] = useState<any[]>([])
+  const [filteredComplaints, setFilteredComplaints] = useState<any[]>([])
+  const [departmentInfo, setDepartmentInfo] = useState<any>(null)
+  const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState('')
+  const [categoryFilter, setCategoryFilter] = useState('')
   const [priorityFilter, setPriorityFilter] = useState('')
 
-  // Filter complaints for this department
-  const departmentComplaints = mockComplaints
+  useEffect(() => {
+    if (user) {
+      loadComplaints()
+    }
+  }, [user])
 
-  const filteredComplaints = departmentComplaints.filter(complaint => {
-    const matchesSearch = complaint.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         complaint.complaintId.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         complaint.student.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         complaint.courseCode.toLowerCase().includes(searchTerm.toLowerCase())
+  useEffect(() => {
+    filterComplaints()
+  }, [complaints, searchTerm, statusFilter, categoryFilter, priorityFilter])
 
-    const matchesStatus = !statusFilter || complaint.status === statusFilter
-    const matchesPriority = !priorityFilter || complaint.priority === priorityFilter
+  const loadComplaints = async () => {
+    if (!user) return
 
-    return matchesSearch && matchesStatus && matchesPriority
-  })
+    try {
+      // Get department officer info
+      const { data: officerData, error: officerError } = await supabase
+        .from('department_officers')
+        .select(`
+          *,
+          departments(*)
+        `)
+        .eq('id', user.id)
+        .single()
 
-  const pendingComplaints = departmentComplaints.filter(c => c.status === 'pending')
-  const inProgressComplaints = departmentComplaints.filter(c => c.status === 'in_progress')
-  const overdueComplaints = departmentComplaints.filter(c => c.isOverdue)
+      if (officerError) throw officerError
+
+      setDepartmentInfo(officerData)
+
+      // Load department complaints
+      const result = await ComplaintService.getDepartmentComplaints(officerData.department_id)
+      if (result.success && result.complaints) {
+        setComplaints(result.complaints)
+      }
+    } catch (error) {
+      console.error('Error loading complaints:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const filterComplaints = () => {
+    let filtered = complaints
+
+    if (searchTerm) {
+      filtered = filtered.filter(complaint =>
+        complaint.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        complaint.complaint_id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        complaint.course_code.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        complaint.students?.users?.name.toLowerCase().includes(searchTerm.toLowerCase())
+      )
+    }
+
+    if (statusFilter) {
+      filtered = filtered.filter(complaint => complaint.status === statusFilter)
+    }
+
+    if (categoryFilter) {
+      filtered = filtered.filter(complaint => complaint.category === categoryFilter)
+    }
+
+    if (priorityFilter) {
+      filtered = filtered.filter(complaint => complaint.priority === priorityFilter)
+    }
+
+    setFilteredComplaints(filtered)
+  }
+
+  const handleStatusUpdate = async (complaintId: string, newStatus: ComplaintStatus) => {
+    try {
+      const result = await ComplaintService.updateComplaintStatus(
+        complaintId,
+        newStatus,
+        newStatus === 'in_progress' ? user?.id : undefined
+      )
+
+      if (result.success) {
+        // Reload complaints to get updated data
+        loadComplaints()
+      } else {
+        alert('Failed to update complaint status')
+      }
+    } catch (error) {
+      console.error('Error updating status:', error)
+      alert('Failed to update complaint status')
+    }
+  }
+
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-gray-600">Please log in to access the department complaints.</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (loading) {
+    return (
+      <DashboardLayout user={{ name: user.name, role: 'department_officer', email: user.email }} notifications={0}>
+        <div className="p-6">
+          <div className="text-center py-12">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+            <p className="mt-4 text-gray-600">Loading complaints...</p>
+          </div>
+        </div>
+      </DashboardLayout>
+    )
+  }
+
+  const userInfo = {
+    name: user.name,
+    role: 'department_officer' as const,
+    email: user.email,
+    department: departmentInfo?.departments?.name || 'Department'
+  }
 
   return (
-    <DashboardLayout user={mockUser} notifications={8}>
+    <DashboardLayout user={userInfo} notifications={complaints.filter(c => c.status === 'pending').length}>
       <div className="p-6 space-y-6">
         {/* Header */}
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Department Complaints</h1>
-          <p className="text-gray-600 mt-2">Manage complaints for {mockUser.department}</p>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Department Complaints</h1>
+            <p className="text-gray-600 mt-1">
+              Manage complaints for {departmentInfo?.departments?.name || 'your department'}
+            </p>
+          </div>
+          <div className="mt-4 sm:mt-0 flex space-x-3">
+            <Button variant="outline">
+              Export Report
+            </Button>
+            <Button>
+              Bulk Actions
+            </Button>
+          </div>
         </div>
 
         {/* Stats Cards */}
@@ -163,7 +241,7 @@ export default function DepartmentComplaintsPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-gray-600">Total Department</p>
-                  <p className="text-2xl font-bold">{departmentComplaints.length}</p>
+                  <p className="text-2xl font-bold">{complaints.length}</p>
                 </div>
                 <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
                   <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -179,7 +257,7 @@ export default function DepartmentComplaintsPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-gray-600">In Progress</p>
-                  <p className="text-2xl font-bold text-primary">{inProgressComplaints.length}</p>
+                  <p className="text-2xl font-bold text-primary">{complaints.filter(c => c.status === 'in_progress').length}</p>
                 </div>
                 <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center">
                   <svg className="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -195,7 +273,7 @@ export default function DepartmentComplaintsPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-gray-600">Pending Action</p>
-                  <p className="text-2xl font-bold text-warning">{pendingComplaints.length}</p>
+                  <p className="text-2xl font-bold text-warning">{complaints.filter(c => c.status === 'pending').length}</p>
                 </div>
                 <div className="w-8 h-8 bg-yellow-100 rounded-full flex items-center justify-center">
                   <svg className="w-4 h-4 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -210,8 +288,8 @@ export default function DepartmentComplaintsPage() {
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-600">Overdue</p>
-                  <p className="text-2xl font-bold text-error">{overdueComplaints.length}</p>
+                  <p className="text-sm text-gray-600">Resolved</p>
+                  <p className="text-2xl font-bold text-success">{complaints.filter(c => c.status === 'resolved').length}</p>
                 </div>
                 <div className="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center">
                   <svg className="w-4 h-4 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -226,7 +304,7 @@ export default function DepartmentComplaintsPage() {
         {/* Filters */}
         <Card>
           <CardContent className="pt-6">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
               <Input
                 placeholder="Search complaints..."
                 value={searchTerm}
@@ -237,35 +315,30 @@ export default function DepartmentComplaintsPage() {
                   </svg>
                 }
               />
-
-              <select
+              <Select
+                placeholder="Filter by status"
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
-                className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-              >
-                <option value="">All Statuses</option>
-                <option value="pending">Pending</option>
-                <option value="in_progress">In Progress</option>
-                <option value="resolved">Resolved</option>
-                <option value="rejected">Rejected</option>
-              </select>
-
-              <select
+                options={statusOptions}
+              />
+              <Select
+                placeholder="Filter by category"
+                value={categoryFilter}
+                onChange={(e) => setCategoryFilter(e.target.value)}
+                options={categoryOptions}
+              />
+              <Select
+                placeholder="Filter by priority"
                 value={priorityFilter}
                 onChange={(e) => setPriorityFilter(e.target.value)}
-                className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-              >
-                <option value="">All Priorities</option>
-                <option value="high">High Priority</option>
-                <option value="medium">Medium Priority</option>
-                <option value="low">Low Priority</option>
-              </select>
-
+                options={priorityOptions}
+              />
               <Button
                 variant="outline"
                 onClick={() => {
                   setSearchTerm('')
                   setStatusFilter('')
+                  setCategoryFilter('')
                   setPriorityFilter('')
                 }}
               >
@@ -276,150 +349,90 @@ export default function DepartmentComplaintsPage() {
         </Card>
 
         {/* Complaints List */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Complaints ({filteredComplaints.length})</CardTitle>
-            <CardDescription>Department complaints requiring attention</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {filteredComplaints.length === 0 ? (
-                <div className="text-center py-12">
-                  <svg className="w-12 h-12 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                  </svg>
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">No complaints found</h3>
-                  <p className="text-gray-600">No complaints match your current filters.</p>
-                </div>
-              ) : (
-                filteredComplaints.map((complaint) => (
-                  <div key={complaint.id} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+        {filteredComplaints.length === 0 ? (
+          <Card>
+            <CardContent className="text-center py-12">
+              <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+              <h3 className="mt-4 text-lg font-medium text-gray-900">No complaints found</h3>
+              <p className="mt-2 text-gray-600">
+                {complaints.length === 0
+                  ? "No complaints have been submitted to your department yet."
+                  : "No complaints match your current filters."
+                }
+              </p>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="space-y-4">
+            {filteredComplaints.map((complaint) => (
+              <Card key={complaint.id} className="hover:shadow-md transition-shadow">
+                <CardContent className="p-6">
+                  <div className="flex items-start justify-between">
                     <div className="flex-1">
                       <div className="flex items-center space-x-3 mb-2">
-                        <h3 className="font-semibold text-gray-900">{complaint.title}</h3>
+                        <h3 className="text-lg font-semibold text-gray-900">{complaint.title}</h3>
                         <Badge variant={getStatusColor(complaint.status)} size="sm">
                           {complaint.status.replace('_', ' ')}
                         </Badge>
-                        <Badge variant={getPriorityColor(complaint.priority)} size="sm">
-                          {complaint.priority}
+                        <Badge variant="outline" size="sm">
+                          {getCategoryLabel(complaint.category)}
                         </Badge>
-                        {complaint.isOverdue && (
-                          <Badge variant="error" size="sm">Overdue</Badge>
-                        )}
-                        {complaint.hasUnreadMessages && (
-                          <Badge variant="info" size="sm">New Message</Badge>
-                        )}
+                        <Badge variant={getPriorityColor(complaint.priority)} size="sm">
+                          {complaint.priority} priority
+                        </Badge>
                       </div>
-                      
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm text-gray-600 mb-2">
+
+                      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 text-sm text-gray-600 mb-3">
                         <div>
-                          <span className="font-medium">ID:</span> {complaint.complaintId}
+                          <span className="font-medium">ID:</span> {complaint.complaint_id}
                         </div>
                         <div>
-                          <span className="font-medium">Student:</span> {complaint.student.name}
+                          <span className="font-medium">Student:</span> {complaint.students?.users?.name}
                         </div>
                         <div>
-                          <span className="font-medium">Course:</span> {complaint.courseCode}
+                          <span className="font-medium">Course:</span> {complaint.course_code}
                         </div>
                         <div>
-                          <span className="font-medium">Category:</span> {complaint.category.replace('_', ' ')}
+                          <span className="font-medium">Submitted:</span> {formatDate(new Date(complaint.submitted_at))}
                         </div>
                       </div>
-                      
-                      <div className="flex items-center space-x-4 text-sm text-gray-500">
-                        <span>Submitted: {formatDate(complaint.submittedAt)}</span>
-                        <span>Updated: {formatDate(complaint.updatedAt)}</span>
-                        <span>{complaint.daysOpen} days open</span>
-                        {complaint.lastResponse && (
-                          <span>Last response: {formatDate(complaint.lastResponse)}</span>
-                        )}
-                        {complaint.assignedTo && (
-                          <span>Assigned to: <span className="font-medium">{complaint.assignedTo}</span></span>
-                        )}
-                      </div>
+
+                      <p className="text-gray-700 line-clamp-2">{complaint.description}</p>
+
+                      {complaint.complaint_responses && complaint.complaint_responses.length > 0 && (
+                        <div className="mt-3 flex items-center text-sm text-blue-600">
+                          <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                          </svg>
+                          {complaint.complaint_responses.length} response(s)
+                        </div>
+                      )}
                     </div>
-                    
-                    <div className="flex flex-col space-y-2 ml-4">
+
+                    <div className="ml-4 flex flex-col space-y-2">
+                      {complaint.status === 'pending' && (
+                        <Button
+                          size="sm"
+                          onClick={() => handleStatusUpdate(complaint.id, 'in_progress')}
+                        >
+                          Take Action
+                        </Button>
+                      )}
+
                       <Link href={`/department/complaints/${complaint.id}`}>
-                        <Button variant="primary" size="sm">
+                        <Button variant="outline" size="sm" className="w-full">
                           View Details
                         </Button>
                       </Link>
-                      {complaint.status !== 'resolved' && (
-                        <Button variant="outline" size="sm">
-                          Update Status
-                        </Button>
-                      )}
                     </div>
                   </div>
-                ))
-              )}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Quick Actions */}
-        <div className="grid md:grid-cols-3 gap-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Quick Actions</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <Link href="/department/complaints">
-                <Button className="w-full justify-start">
-                  View All Complaints ({departmentComplaints.length})
-                </Button>
-              </Link>
-              <Link href="/department/communications">
-                <Button variant="outline" className="w-full justify-start">
-                  Message Center
-                </Button>
-              </Link>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Today's Summary</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2 text-sm">
-                <div className="flex justify-between">
-                  <span>New complaints:</span>
-                  <span className="font-medium">3</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Responses sent:</span>
-                  <span className="font-medium">2</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Resolved:</span>
-                  <span className="font-medium">1</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Pending action:</span>
-                  <span className="font-medium text-warning">{pendingComplaints.length}</span>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Email Notifications</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-sm text-gray-600 mb-3">
-                Daily summary emails are sent at 5:00 PM
-              </div>
-              <Link href="/department/settings">
-                <Button variant="outline" size="sm" className="w-full">
-                  Configure Settings
-                </Button>
-              </Link>
-            </CardContent>
-          </Card>
-        </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
       </div>
     </DashboardLayout>
   )

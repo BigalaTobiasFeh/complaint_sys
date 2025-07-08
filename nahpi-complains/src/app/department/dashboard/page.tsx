@@ -1,11 +1,14 @@
 'use client'
 
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { DashboardLayout } from '@/components/layout/DashboardLayout'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
+import { useAuth } from '@/contexts/AuthContext'
+import { ComplaintService } from '@/lib/complaints'
+import { supabase } from '@/lib/supabase'
 
 // Mock data
 const mockUser = {
@@ -142,13 +145,142 @@ function formatDateTime(date: Date) {
 }
 
 export default function DepartmentDashboard() {
+  const { user } = useAuth()
+  const [stats, setStats] = useState(mockStats)
+  const [recentComplaints, setRecentComplaints] = useState(mockDepartmentComplaints)
+  const [departmentInfo, setDepartmentInfo] = useState<any>(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    if (user) {
+      loadDashboardData()
+    }
+  }, [user])
+
+  const loadDashboardData = async () => {
+    if (!user) return
+
+    try {
+      // Get department officer info
+      const { data: officerData, error: officerError } = await supabase
+        .from('department_officers')
+        .select(`
+          *,
+          departments(*)
+        `)
+        .eq('id', user.id)
+        .single()
+
+      if (officerError) throw officerError
+
+      setDepartmentInfo(officerData)
+
+      // Load department complaints
+      const complaintsResult = await ComplaintService.getDepartmentComplaints(officerData.department_id)
+
+      if (complaintsResult.success && complaintsResult.complaints) {
+        const complaints = complaintsResult.complaints
+
+        // Calculate stats
+        const totalComplaints = complaints.length
+        const pendingComplaints = complaints.filter(c => c.status === 'pending').length
+        const inProgressComplaints = complaints.filter(c => c.status === 'in_progress').length
+        const resolvedComplaints = complaints.filter(c => c.status === 'resolved').length
+        const rejectedComplaints = complaints.filter(c => c.status === 'rejected').length
+
+        // Calculate today's new complaints
+        const today = new Date()
+        today.setHours(0, 0, 0, 0)
+        const todayNewComplaints = complaints.filter(c =>
+          new Date(c.submitted_at) >= today
+        ).length
+
+        setStats({
+          departmentComplaints: totalComplaints,
+          pendingComplaints,
+          inProgressComplaints,
+          resolvedComplaints,
+          rejectedComplaints,
+          todayNewComplaints,
+          averageResponseTime: 2.1, // TODO: Calculate from data
+          resolutionRate: totalComplaints > 0 ? Math.round((resolvedComplaints / totalComplaints) * 100) : 0
+        })
+
+        // Format recent complaints
+        const formattedComplaints = complaints.slice(0, 5).map(complaint => ({
+          id: complaint.id,
+          complaintId: complaint.complaint_id,
+          title: complaint.title,
+          student: complaint.students?.users?.name || 'Unknown',
+          studentEmail: complaint.students?.users?.email || '',
+          courseCode: complaint.course_code,
+          status: complaint.status,
+          priority: complaint.priority || 'medium',
+          submittedAt: new Date(complaint.submitted_at),
+          lastUpdated: new Date(complaint.updated_at),
+          isOverdue: false, // TODO: Calculate based on deadlines
+          daysOpen: Math.floor((Date.now() - new Date(complaint.submitted_at).getTime()) / (1000 * 60 * 60 * 24))
+        }))
+        setRecentComplaints(formattedComplaints)
+      }
+    } catch (error) {
+      console.error('Error loading dashboard data:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-gray-600">Please log in to access the department dashboard.</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (loading) {
+    return (
+      <DashboardLayout user={{ name: user.name, role: 'department_officer', email: user.email }} notifications={0}>
+        <div className="p-6">
+          <div className="text-center py-12">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+            <p className="mt-4 text-gray-600">Loading dashboard...</p>
+          </div>
+        </div>
+      </DashboardLayout>
+    )
+  }
+
+  const userInfo = {
+    name: user.name,
+    role: 'department_officer' as const,
+    email: user.email,
+    department: departmentInfo?.departments?.name || 'Department'
+  }
+
   return (
-    <DashboardLayout user={mockUser} notifications={8}>
+    <DashboardLayout user={userInfo} notifications={stats.pendingComplaints}>
       <div className="p-6 space-y-6">
         {/* Header */}
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Department Dashboard</h1>
-          <p className="text-gray-600 mt-2">Manage complaints for {mockUser.department}</p>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">Department Dashboard</h1>
+            <p className="text-gray-600 mt-2">
+              Manage complaints for {departmentInfo?.departments?.name || 'your department'}
+            </p>
+          </div>
+          <div className="mt-4 sm:mt-0 flex space-x-3">
+            <Link href="/department/complaints">
+              <Button variant="outline">
+                View All Complaints
+              </Button>
+            </Link>
+            <Button>
+              Generate Report
+            </Button>
+          </div>
         </div>
 
         {/* Key Metrics */}
@@ -158,7 +290,7 @@ export default function DepartmentDashboard() {
               <CardTitle className="text-sm font-medium text-gray-600">Department Complaints</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-gray-900">{mockStats.departmentComplaints}</div>
+              <div className="text-2xl font-bold text-gray-900">{stats.departmentComplaints}</div>
               <p className="text-xs text-gray-500 mt-1">Total this month</p>
             </CardContent>
           </Card>
@@ -168,7 +300,7 @@ export default function DepartmentDashboard() {
               <CardTitle className="text-sm font-medium text-gray-600">In Progress</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-primary">{mockStats.inProgressComplaints}</div>
+              <div className="text-2xl font-bold text-primary">{stats.inProgressComplaints}</div>
               <p className="text-xs text-gray-500 mt-1">Being processed</p>
             </CardContent>
           </Card>
@@ -178,7 +310,7 @@ export default function DepartmentDashboard() {
               <CardTitle className="text-sm font-medium text-gray-600">Today's New</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-info">{mockStats.todayNewComplaints}</div>
+              <div className="text-2xl font-bold text-info">{stats.todayNewComplaints}</div>
               <p className="text-xs text-gray-500 mt-1">Received today</p>
             </CardContent>
           </Card>

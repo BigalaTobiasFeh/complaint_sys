@@ -1,11 +1,13 @@
 'use client'
 
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { DashboardLayout } from '@/components/layout/DashboardLayout'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
+import { useAuth } from '@/contexts/AuthContext'
+import { AdminService } from '@/lib/admin'
 
 // Mock data
 const mockUser = {
@@ -111,13 +113,94 @@ function formatDate(date: Date) {
 }
 
 export default function AdminDashboard() {
+  const { user } = useAuth()
+  const [systemStats, setSystemStats] = useState<any>(null)
+  const [departmentAnalytics, setDepartmentAnalytics] = useState<any[]>([])
+  const [complaintTrends, setComplaintTrends] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    if (user) {
+      loadDashboardData()
+    }
+  }, [user])
+
+  const loadDashboardData = async () => {
+    try {
+      // Load system statistics
+      const statsResult = await AdminService.getSystemStats()
+      if (statsResult.success) {
+        setSystemStats(statsResult.stats)
+      }
+
+      // Load department analytics
+      const analyticsResult = await AdminService.getDepartmentAnalytics()
+      if (analyticsResult.success && analyticsResult.analytics) {
+        setDepartmentAnalytics(analyticsResult.analytics)
+      }
+
+      // Load complaint trends
+      const trendsResult = await AdminService.getComplaintTrends(30)
+      if (trendsResult.success && trendsResult.trends) {
+        setComplaintTrends(trendsResult.trends)
+      }
+    } catch (error) {
+      console.error('Error loading dashboard data:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-gray-600">Please log in to access the admin dashboard.</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (loading) {
+    return (
+      <DashboardLayout user={{ name: user.name, role: 'admin', email: user.email }} notifications={0}>
+        <div className="p-6">
+          <div className="text-center py-12">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+            <p className="mt-4 text-gray-600">Loading dashboard...</p>
+          </div>
+        </div>
+      </DashboardLayout>
+    )
+  }
+
+  const userInfo = {
+    name: user.name,
+    role: 'admin' as const,
+    email: user.email
+  }
+
   return (
-    <DashboardLayout user={mockUser} notifications={15}>
+    <DashboardLayout user={userInfo} notifications={systemStats?.complaints?.pending || 0}>
       <div className="p-6 space-y-6">
         {/* Header */}
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
-          <p className="text-gray-600 mt-2">Overview of the complaint management system</p>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
+            <p className="text-gray-600 mt-2">System overview and management</p>
+          </div>
+          <div className="mt-4 sm:mt-0 flex space-x-3">
+            <Link href="/admin/reports">
+              <Button variant="outline">
+                Generate Report
+              </Button>
+            </Link>
+            <Link href="/admin/users">
+              <Button>
+                Manage Users
+              </Button>
+            </Link>
+          </div>
         </div>
 
         {/* Key Metrics */}
@@ -127,18 +210,18 @@ export default function AdminDashboard() {
               <CardTitle className="text-sm font-medium text-gray-600">Total Complaints</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-gray-900">{mockStats.totalComplaints}</div>
-              <p className="text-xs text-green-600 mt-1">+12% from last month</p>
+              <div className="text-2xl font-bold text-gray-900">{systemStats?.complaints?.total || 0}</div>
+              <p className="text-xs text-gray-500 mt-1">All time</p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600">In Progress</CardTitle>
+              <CardTitle className="text-sm font-medium text-gray-600">Pending</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-info">{mockStats.inProgressComplaints}</div>
-              <p className="text-xs text-gray-500 mt-1">Being processed</p>
+              <div className="text-2xl font-bold text-warning">{systemStats?.complaints?.pending || 0}</div>
+              <p className="text-xs text-gray-500 mt-1">Awaiting action</p>
             </CardContent>
           </Card>
 
@@ -147,18 +230,18 @@ export default function AdminDashboard() {
               <CardTitle className="text-sm font-medium text-gray-600">Overdue</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-error">{mockStats.overdueComplaints}</div>
+              <div className="text-2xl font-bold text-error">{systemStats?.complaints?.overdue || 0}</div>
               <p className="text-xs text-gray-500 mt-1">Past deadline</p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600">Avg Resolution</CardTitle>
+              <CardTitle className="text-sm font-medium text-gray-600">Resolution Rate</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-gray-900">{mockStats.averageResolutionTime} days</div>
-              <p className="text-xs text-green-600 mt-1">-0.8 days improved</p>
+              <div className="text-2xl font-bold text-success">{systemStats?.complaints?.resolutionRate || 0}%</div>
+              <p className="text-xs text-gray-500 mt-1">Success rate</p>
             </CardContent>
           </Card>
         </div>
