@@ -231,3 +231,11 @@ DashboardLayout
 src/components/layout/DashboardLayout.tsx (293:25)
 DepartmentSettings
 src/app/department/settings/page.tsx (175:7)
+
+
+WORK ON ADMIN PANEL
+-Let Admins be able to create departments and department officer accounts
+-Adjust admin panel pages
+CREATE DEPARTMENT ACCOUNTS FOR EACH DEPARTMENT
+MAKE SURE A DEPARTMENT HAS ATLEAST 5 STUDENTS
+Come out with diagram of system architecture
