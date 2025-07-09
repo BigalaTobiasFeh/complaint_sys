@@ -174,6 +174,18 @@ export function DashboardLayout({ children, user, notifications = 0, complaintsB
     }
   }
 
+  // Safety check: if user is null, show loading state
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading...</p>
+        </div>
+      </div>
+    )
+  }
+
   const isActive = (href: string) => {
     return pathname === href || pathname.startsWith(href + '/')
   }
@@ -290,14 +302,14 @@ export function DashboardLayout({ children, user, notifications = 0, complaintsB
             <div className="flex items-center space-x-3">
               <div className="w-10 h-10 bg-primary rounded-full flex items-center justify-center">
                 <span className="text-white text-sm font-medium">
-                  {user.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
+                  {user?.name?.split(' ').map(n => n[0]).join('').slice(0, 2) || 'U'}
                 </span>
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-gray-900 truncate">{user.name}</p>
-                <p className="text-xs text-gray-500 truncate">{user.email}</p>
-                {user.department && (
-                  <p className="text-xs text-gray-400 truncate">{user.department}</p>
+                <p className="text-sm font-medium text-gray-900 truncate">{user?.name || 'User'}</p>
+                <p className="text-xs text-gray-500 truncate">{user?.email || 'No email'}</p>
+                {user?.department && (
+                  <p className="text-xs text-gray-400 truncate">{user?.department}</p>
                 )}
               </div>
             </div>
