@@ -38,6 +38,7 @@ export default function DepartmentStudentsPage() {
   const [statusFilter, setStatusFilter] = useState('')
   const [selectedStudent, setSelectedStudent] = useState<any>(null)
   const [showStudentModal, setShowStudentModal] = useState(false)
+  const [totalComplaints, setTotalComplaints] = useState(0)
 
   useEffect(() => {
     if (user) {
@@ -86,7 +87,6 @@ export default function DepartmentStudentsPage() {
           )
         `)
         .eq('department_id', officerData.department_id)
-        .order('created_at', { ascending: false })
 
       if (studentsError) {
         console.error('Error loading students:', studentsError)
@@ -115,6 +115,17 @@ export default function DepartmentStudentsPage() {
       )
 
       setStudents(studentsWithComplaints)
+
+      // Get total complaints count for this department
+      const { data: departmentComplaints, error: complaintsCountError } = await supabase
+        .from('complaints')
+        .select('id')
+        .eq('department_id', officerData.department_id)
+
+      if (!complaintsCountError && departmentComplaints) {
+        setTotalComplaints(departmentComplaints.length)
+      }
+
     } catch (error) {
       console.error('Error loading students:', error)
     } finally {
@@ -216,7 +227,7 @@ export default function DepartmentStudentsPage() {
   }
 
   return (
-    <DashboardLayout user={userInfo} notifications={0}>
+    <DashboardLayout user={userInfo} notifications={0} complaintsBadge={totalComplaints}>
       <div className="p-6 space-y-6">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">

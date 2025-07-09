@@ -198,7 +198,7 @@ export default function DepartmentSettings() {
   }
 
   return (
-    <DashboardLayout user={userInfo} notifications={0}>
+    <DashboardLayout user={userInfo} notifications={0} complaintsBadge={0}>
       <div className="p-6 space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">

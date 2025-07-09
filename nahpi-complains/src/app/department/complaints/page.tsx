@@ -353,7 +353,11 @@ Generated on: ${new Date().toLocaleString()}`
   }
 
   return (
-    <DashboardLayout user={userInfo} notifications={complaints.filter(c => c.status === 'pending').length}>
+    <DashboardLayout
+      user={userInfo}
+      notifications={complaints.filter(c => c.status === 'pending').length}
+      complaintsBadge={complaints.length}
+    >
       <div className="p-6 space-y-6">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
