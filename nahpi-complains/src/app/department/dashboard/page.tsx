@@ -10,94 +10,7 @@ import { useAuth } from '@/contexts/AuthContext'
 import { ComplaintService } from '@/lib/complaints'
 import { supabase } from '@/lib/supabase'
 
-// Mock data
-const mockUser = {
-  name: 'Dr. Michael Chen',
-  role: 'department_officer' as const,
-  email: 'michael.chen@nahpi.edu',
-  department: 'Computer Science Department',
-  avatar: undefined
-}
-
-const mockStats = {
-  departmentComplaints: 34,
-  pendingComplaints: 8,
-  inProgressComplaints: 4,
-  resolvedComplaints: 20,
-  rejectedComplaints: 2,
-  todayNewComplaints: 3,
-  averageResponseTime: 2.1,
-  resolutionRate: 85
-}
-
-const mockDepartmentComplaints = [
-  {
-    id: '1',
-    complaintId: 'CMP-2024-145',
-    title: 'CA Mark Discrepancy in Data Structures',
-    student: 'Alice Johnson',
-    studentEmail: 'alice.johnson@student.nahpi.edu',
-    courseCode: 'CS301',
-    status: 'pending' as const,
-    priority: 'high' as const,
-    submittedAt: new Date('2024-01-20'),
-    lastUpdated: new Date('2024-01-20'),
-    isOverdue: false,
-    daysOpen: 1
-  },
-  {
-    id: '2',
-    complaintId: 'CMP-2024-142',
-    title: 'Exam Mark Query for Algorithms',
-    student: 'Bob Smith',
-    studentEmail: 'bob.smith@student.nahpi.edu',
-    courseCode: 'CS401',
-    status: 'in_progress' as const,
-    priority: 'medium' as const,
-    submittedAt: new Date('2024-01-18'),
-    lastUpdated: new Date('2024-01-19'),
-    isOverdue: false,
-    daysOpen: 3
-  },
-  {
-    id: '3',
-    complaintId: 'CMP-2024-138',
-    title: 'Missing Assignment Grade',
-    student: 'Carol Davis',
-    studentEmail: 'carol.davis@student.nahpi.edu',
-    courseCode: 'CS201',
-    status: 'pending' as const,
-    priority: 'low' as const,
-    submittedAt: new Date('2024-01-15'),
-    lastUpdated: new Date('2024-01-15'),
-    isOverdue: true,
-    daysOpen: 6
-  }
-]
-
-const mockRecentActivity = [
-  {
-    id: '1',
-    type: 'complaint_assigned',
-    message: 'New complaint assigned: CA Mark Discrepancy in Data Structures',
-    timestamp: new Date('2024-01-20T14:30:00'),
-    complaintId: 'CMP-2024-145'
-  },
-  {
-    id: '2',
-    type: 'complaint_updated',
-    message: 'Updated status for Exam Mark Query for Algorithms',
-    timestamp: new Date('2024-01-19T16:45:00'),
-    complaintId: 'CMP-2024-142'
-  },
-  {
-    id: '3',
-    type: 'student_response',
-    message: 'Student responded to Missing Assignment Grade complaint',
-    timestamp: new Date('2024-01-19T10:20:00'),
-    complaintId: 'CMP-2024-138'
-  }
-]
+// Mock data removed - using real database queries
 
 function getStatusColor(status: string) {
   switch (status) {
@@ -146,8 +59,18 @@ function formatDateTime(date: Date) {
 
 export default function DepartmentDashboard() {
   const { user } = useAuth()
-  const [stats, setStats] = useState(mockStats)
-  const [recentComplaints, setRecentComplaints] = useState(mockDepartmentComplaints)
+  const [stats, setStats] = useState({
+    departmentComplaints: 0,
+    pendingComplaints: 0,
+    inProgressComplaints: 0,
+    resolvedComplaints: 0,
+    rejectedComplaints: 0,
+    todayNewComplaints: 0,
+    averageResponseTime: 0,
+    resolutionRate: 0
+  })
+  const [recentComplaints, setRecentComplaints] = useState<any[]>([])
+  const [recentActivity, setRecentActivity] = useState<any[]>([])
   const [departmentInfo, setDepartmentInfo] = useState<any>(null)
   const [loading, setLoading] = useState(true)
 
@@ -320,7 +243,7 @@ export default function DepartmentDashboard() {
               <CardTitle className="text-sm font-medium text-gray-600">Resolution Rate</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-success">{mockStats.resolutionRate}%</div>
+              <div className="text-2xl font-bold text-success">{stats.resolutionRate}%</div>
               <p className="text-xs text-gray-500 mt-1">This month</p>
             </CardContent>
           </Card>
@@ -336,19 +259,19 @@ export default function DepartmentDashboard() {
             <CardContent>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div className="text-center p-4 bg-yellow-50 rounded-lg">
-                  <div className="text-2xl font-bold text-yellow-600">{mockStats.pendingComplaints}</div>
+                  <div className="text-2xl font-bold text-yellow-600">{stats.pendingComplaints}</div>
                   <div className="text-sm text-yellow-700">Pending</div>
                 </div>
                 <div className="text-center p-4 bg-blue-50 rounded-lg">
-                  <div className="text-2xl font-bold text-blue-600">{mockStats.inProgressComplaints}</div>
+                  <div className="text-2xl font-bold text-blue-600">{stats.inProgressComplaints}</div>
                   <div className="text-sm text-blue-700">In Progress</div>
                 </div>
                 <div className="text-center p-4 bg-green-50 rounded-lg">
-                  <div className="text-2xl font-bold text-green-600">{mockStats.resolvedComplaints}</div>
+                  <div className="text-2xl font-bold text-green-600">{stats.resolvedComplaints}</div>
                   <div className="text-sm text-green-700">Resolved</div>
                 </div>
                 <div className="text-center p-4 bg-red-50 rounded-lg">
-                  <div className="text-2xl font-bold text-red-600">{mockStats.rejectedComplaints}</div>
+                  <div className="text-2xl font-bold text-red-600">{stats.rejectedComplaints}</div>
                   <div className="text-sm text-red-700">Rejected</div>
                 </div>
               </div>
@@ -417,7 +340,7 @@ export default function DepartmentDashboard() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {mockDepartmentComplaints.map((complaint) => (
+                {recentComplaints.length > 0 ? recentComplaints.map((complaint) => (
                   <div key={complaint.id} className="flex items-center justify-between p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
                     <div className="flex-1">
                       <div className="flex items-center space-x-2 mb-1">
@@ -445,7 +368,11 @@ export default function DepartmentDashboard() {
                       <Button variant="ghost" size="sm">View Details</Button>
                     </Link>
                   </div>
-                ))}
+                )) : (
+                  <div className="text-center py-4">
+                    <p className="text-gray-500 text-sm">No recent complaints</p>
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -457,7 +384,7 @@ export default function DepartmentDashboard() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {mockRecentActivity.map((activity) => (
+                {recentActivity.length > 0 ? recentActivity.map((activity) => (
                   <div key={activity.id} className="flex items-start space-x-3 p-3 bg-gray-50 rounded-lg">
                     <div className="w-2 h-2 bg-primary rounded-full mt-2 flex-shrink-0" />
                     <div className="flex-1">
@@ -475,7 +402,11 @@ export default function DepartmentDashboard() {
                       </div>
                     </div>
                   </div>
-                ))}
+                )) : (
+                  <div className="text-center py-4">
+                    <p className="text-gray-500 text-sm">No recent activity</p>
+                  </div>
+                )}
               </div>
               <div className="mt-4 text-center">
                 <Button variant="ghost" size="sm">View All Activity</Button>
@@ -498,7 +429,7 @@ export default function DepartmentDashboard() {
                 </svg>
                 <div>
                   <p className="font-medium text-gray-900">Daily Summary Enabled</p>
-                  <p className="text-sm text-gray-600">Sent daily at 5:00 PM to {mockUser.email}</p>
+                  <p className="text-sm text-gray-600">Sent daily at 5:00 PM to {user?.email || 'your email'}</p>
                 </div>
               </div>
               <Link href="/department/settings">

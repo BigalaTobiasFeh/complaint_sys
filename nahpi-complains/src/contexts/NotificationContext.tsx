@@ -1,6 +1,6 @@
 'use client'
 
-import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react'
+import React, { createContext, useContext, useEffect, useState, useRef, ReactNode } from 'react'
 import { useAuth } from './AuthContext'
 import { NotificationService } from '@/lib/notifications'
 import { supabase } from '@/lib/supabase'
@@ -44,17 +44,19 @@ export function NotificationProvider({ children }: NotificationProviderProps) {
   const [notifications, setNotifications] = useState<NotificationData[]>([])
   const [unreadCount, setUnreadCount] = useState(0)
   const [isLoading, setIsLoading] = useState(false)
+  const subscriptionRef = useRef<any>(null)
 
   useEffect(() => {
     if (user) {
       loadNotifications()
-      setupRealtimeSubscription()
+      subscriptionRef.current = setupRealtimeSubscription()
     }
 
     return () => {
       // Cleanup subscription when component unmounts
-      if (user) {
-        NotificationService.unsubscribeFromNotifications(user.id)
+      if (subscriptionRef.current) {
+        NotificationService.unsubscribeFromNotifications(subscriptionRef.current)
+        subscriptionRef.current = null
       }
     }
   }, [user])

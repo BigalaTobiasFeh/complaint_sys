@@ -317,6 +317,15 @@ export class NotificationService {
 
   // Unsubscribe from notifications
   static unsubscribeFromNotifications(subscription: any) {
-    supabase.removeChannel(subscription)
+    if (subscription) {
+      try {
+        // First unsubscribe from the channel
+        subscription.unsubscribe()
+        // Then remove the channel
+        supabase.removeChannel(subscription)
+      } catch (error) {
+        console.error('Error unsubscribing from notifications:', error)
+      }
+    }
   }
 }

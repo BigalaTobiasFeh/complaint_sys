@@ -17,3 +17,15 @@ Would you like me to proceed with implementing the complaint submission and mana
 
 Logout functionality
 Now lets work on the student portal and make it superd, Make sure there is no page of the student portal using mock data, and also make sure you update or delete the tabs page to represent or to be the pages which have actural database data. Remove any useless page or duplicate page. Also implement the logout functionality for the student page. And a student is unable to submit a complaint with a file attached, looks like we need to look for a proper way to handle this. 
+
+
+Now let's work on the department officer portal and make it super awesome. 
+-Transform all the element/any mock data on the dashboard to be gotten from the database
+-Remove the take action button from the complain cards in the department complaints tab.
+-In the department complaints tab, make sure I am actually able to download/export all the complaints (Bulk action) in csv or excel format. But for exporting individual complaints, I should be able to download them in pdf format.
+-When I view complain details, let the status update work and the respond message should only be obligatory when I change the status to 'resolved' or 'rejected' and let the message get to the student as a notification (This is how it should be each time a complaints is either rejcted or resolved). The status updates I perform on a complain should be reflect everywhere it is suppose to reflect in the system.
+-Do not forget to implement the logout functionality
+-In the settings tab, let the department officer be able to edit his/her profile and make all the other functionalities there actually functional. 
+-The communication(/department/communications) tab should fully be transformed/renamed into department students and should display all the students on the platform who are in that department. /department/communications
+-Remove all useless stuffs
+-Add any other modification you think is neccessary for the department portal of this kind of system

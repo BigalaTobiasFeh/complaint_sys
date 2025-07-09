@@ -95,6 +95,7 @@ export default function DepartmentComplaintsPage() {
   const [statusFilter, setStatusFilter] = useState('')
   const [categoryFilter, setCategoryFilter] = useState('')
   const [priorityFilter, setPriorityFilter] = useState('')
+  const [isExporting, setIsExporting] = useState(false)
 
   useEffect(() => {
     if (user) {
@@ -183,6 +184,144 @@ export default function DepartmentComplaintsPage() {
     }
   }
 
+  // Export functions
+  const exportToCSV = async () => {
+    setIsExporting(true)
+    try {
+      const dataToExport = filteredComplaints.map(complaint => ({
+        'Complaint ID': complaint.complaint_id,
+        'Title': complaint.title,
+        'Student Name': complaint.students?.users?.name || 'Unknown',
+        'Student Email': complaint.students?.users?.email || '',
+        'Matricule': complaint.students?.matricule || '',
+        'Course Code': complaint.course_code,
+        'Course Title': complaint.course_title,
+        'Category': getCategoryLabel(complaint.category),
+        'Status': complaint.status,
+        'Priority': complaint.priority || 'medium',
+        'Submitted Date': new Date(complaint.submitted_at).toLocaleDateString(),
+        'Last Updated': new Date(complaint.updated_at).toLocaleDateString(),
+        'Description': complaint.description
+      }))
+
+      const csvContent = [
+        Object.keys(dataToExport[0]).join(','),
+        ...dataToExport.map(row =>
+          Object.values(row).map(value =>
+            `"${String(value).replace(/"/g, '""')}"`
+          ).join(',')
+        )
+      ].join('\n')
+
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+      const link = document.createElement('a')
+      const url = URL.createObjectURL(blob)
+      link.setAttribute('href', url)
+      link.setAttribute('download', `department-complaints-${new Date().toISOString().split('T')[0]}.csv`)
+      link.style.visibility = 'hidden'
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+    } catch (error) {
+      console.error('Error exporting CSV:', error)
+    } finally {
+      setIsExporting(false)
+    }
+  }
+
+  const exportComplaintToPDF = async (complaintId: string) => {
+    try {
+      // Find the complaint
+      const complaint = complaints.find(c => c.id === complaintId)
+      if (!complaint) return
+
+      // Get complaint details with responses
+      const { data: detailedComplaint, error } = await supabase
+        .from('complaints')
+        .select(`
+          *,
+          students(
+            matricule,
+            users(name, email)
+          ),
+          departments(name, code),
+          complaint_attachments(*),
+          complaint_responses(
+            *,
+            users(name, role)
+          )
+        `)
+        .eq('id', complaintId)
+        .single()
+
+      if (error) {
+        console.error('Error fetching complaint details:', error)
+        return
+      }
+
+      // Create PDF content (as text file for now)
+      const pdfContent = `NAHPI COMPLAINT MANAGEMENT SYSTEM
+COMPLAINT DETAILS REPORT
+
+Complaint ID: ${detailedComplaint.complaint_id}
+Title: ${detailedComplaint.title}
+Status: ${detailedComplaint.status.toUpperCase()}
+Priority: ${detailedComplaint.priority || 'Medium'}
+
+STUDENT INFORMATION:
+Name: ${detailedComplaint.students?.users?.name || 'Unknown'}
+Email: ${detailedComplaint.students?.users?.email || 'Unknown'}
+Matricule: ${detailedComplaint.students?.matricule || 'Unknown'}
+
+COURSE INFORMATION:
+Course Code: ${detailedComplaint.course_code}
+Course Title: ${detailedComplaint.course_title}
+Course Level: ${detailedComplaint.course_level}
+Semester: ${detailedComplaint.semester}
+Academic Year: ${detailedComplaint.academic_year}
+
+DEPARTMENT:
+${detailedComplaint.departments?.name || 'Unknown Department'}
+
+COMPLAINT DETAILS:
+Category: ${getCategoryLabel(detailedComplaint.category)}
+Submitted: ${new Date(detailedComplaint.submitted_at).toLocaleString()}
+Last Updated: ${new Date(detailedComplaint.updated_at).toLocaleString()}
+
+DESCRIPTION:
+${detailedComplaint.description}
+
+ATTACHMENTS:
+${detailedComplaint.complaint_attachments?.length > 0
+  ? detailedComplaint.complaint_attachments.map((att: any) => `- ${att.file_name}`).join('\n')
+  : 'No attachments'
+}
+
+RESPONSE HISTORY:
+${detailedComplaint.complaint_responses?.length > 0
+  ? detailedComplaint.complaint_responses.map((resp: any) =>
+      `[${new Date(resp.created_at).toLocaleString()}] ${resp.users?.name || 'Unknown'} (${resp.users?.role || 'Unknown'}): ${resp.message}`
+    ).join('\n\n')
+  : 'No responses yet'
+}
+
+Generated on: ${new Date().toLocaleString()}`
+
+      // Create and download file
+      const blob = new Blob([pdfContent], { type: 'text/plain;charset=utf-8;' })
+      const link = document.createElement('a')
+      const url = URL.createObjectURL(blob)
+      link.setAttribute('href', url)
+      link.setAttribute('download', `complaint-${detailedComplaint.complaint_id}.txt`)
+      link.style.visibility = 'hidden'
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+    } catch (error) {
+      console.error('Error exporting complaint:', error)
+    }
+  }
+
   if (!user) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -225,11 +364,18 @@ export default function DepartmentComplaintsPage() {
             </p>
           </div>
           <div className="mt-4 sm:mt-0 flex space-x-3">
-            <Button variant="outline">
-              Export Report
+            <Button
+              variant="outline"
+              onClick={exportToCSV}
+              disabled={isExporting || filteredComplaints.length === 0}
+            >
+              {isExporting ? 'Exporting...' : 'Export All CSV'}
             </Button>
-            <Button>
-              Bulk Actions
+            <Button variant="outline">
+              <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+              Filters
             </Button>
           </div>
         </div>
@@ -412,20 +558,23 @@ export default function DepartmentComplaintsPage() {
                     </div>
 
                     <div className="ml-4 flex flex-col space-y-2">
-                      {complaint.status === 'pending' && (
-                        <Button
-                          size="sm"
-                          onClick={() => handleStatusUpdate(complaint.id, 'in_progress')}
-                        >
-                          Take Action
-                        </Button>
-                      )}
-
                       <Link href={`/department/complaints/${complaint.id}`}>
                         <Button variant="outline" size="sm" className="w-full">
                           View Details
                         </Button>
                       </Link>
+
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="w-full text-gray-600 hover:text-gray-800"
+                        onClick={() => exportComplaintToPDF(complaint.id)}
+                      >
+                        <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                        Download
+                      </Button>
                     </div>
                   </div>
                 </CardContent>
