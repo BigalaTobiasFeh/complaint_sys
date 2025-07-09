@@ -29,3 +29,205 @@ Now let's work on the department officer portal and make it super awesome.
 -The communication(/department/communications) tab should fully be transformed/renamed into department students and should display all the students on the platform who are in that department. /department/communications
 -Remove all useless stuffs
 -Add any other modification you think is neccessary for the department portal of this kind of system
+
+
+
+I'm still having some errors for logout functionality from the department portal (I'm using the logout button in the settings page). Also, it looks like the logout button on the profile section of this portal doesn't even work.
+
+I want us to make it in such a way that, when a complaint is resolved or rejected, it should also be sent to the student's email (It already sends an in-system-notification to the student's account). I want the email to contain the response message and the message, 'Checkout: https://ubastudent.online/'
+And also, 'Department Student' tab in the department officer panel is unable to display the students that belong to that department
+
+
+I am still unable to see the students in the 'Department students' tab. When I try to reload that page, this is the error message I get:
+Runtime Error
+
+
+Error: Cannot read properties of null (reading 'role')
+
+src/components/layout/DashboardLayout.tsx (266:71) @ DashboardLayout
+
+
+  264 |               <div>
+  265 |                 <h1 className="text-lg font-bold text-primary">NAHPi Complains</h1>
+> 266 |                 <p className="text-xs text-gray-500 capitalize">{user.role.replace('_', ' ')}</p>
+      |                                                                       ^
+  267 |               </div>
+  268 |             </Link>
+  269 |             <Button
+Call Stack
+3
+
+Show 1 ignore-listed frame(s)
+DashboardLayout
+src/components/layout/DashboardLayout.tsx (266:71)
+DepartmentStudentsPage
+src/app/department/students/page.tsx (228:7)
+
+You can the processes from the terminal to understand more
+
+Below are other errors I am getting from the department panel pages
+
+Console Error
+Unknown event handler property `onValueChange`. It will be ignored.
+src/components/ui/Select.tsx (36:9) @ Select
+  34 |           </label>
+  35 |         )}
+> 36 |         <select
+     |         ^
+  37 |           id={selectId}
+  38 |           className={cn(
+  39 |             "block w-full rounded-lg border border-gray-300 px-[1rem] py-[0.75rem] text-base bg-white shadow-sm transition-colors",
+Call Stack
+20
+Show 17 ignore-listed frame(s)
+select
+<anonymous> (0:0)
+Select
+src/components/ui/Select.tsx (36:9)
+DepartmentStudentsPage
+src/app/department/students/page.tsx (374:17)
+
+Console Error
+You provided a `value` prop to a form field without an `onChange` handler. This will render a read-only field. If the field should be mutable use `defaultValue`. Otherwise, set `onChange`.
+src/components/ui/Select.tsx (36:9) @ Select
+  34 |           </label>
+  35 |         )}
+> 36 |         <select
+     |         ^
+  37 |           id={selectId}
+  38 |           className={cn(
+  39 |             "block w-full rounded-lg border border-gray-300 px-[1rem] py-[0.75rem] text-base bg-white shadow-sm transition-colors",
+Call Stack
+18
+Show 15 ignore-listed frame(s)
+select
+<anonymous> (0:0)
+Select
+src/components/ui/Select.tsx (36:9)
+DepartmentStudentsPage
+src/app/department/students/page.tsx (374:17)
+
+Console Error
+You provided a `value` prop to a form field without an `onChange` handler. This will render a read-only field. If the field should be mutable use `defaultValue`. Otherwise, set `onChange`.
+src/components/ui/Select.tsx (36:9) @ Select
+  34 |           </label>
+  35 |         )}
+> 36 |         <select
+     |         ^
+  37 |           id={selectId}
+  38 |           className={cn(
+  39 |             "block w-full rounded-lg border border-gray-300 px-[1rem] py-[0.75rem] text-base bg-white shadow-sm transition-colors",
+Call Stack
+18
+Show 15 ignore-listed frame(s)
+select
+<anonymous> (0:0)
+Select
+src/components/ui/Select.tsx (36:9)
+DepartmentStudentsPage
+src/app/department/students/page.tsx (382:17)
+
+Console Error
+Error loading officer data: {}
+src/app/department/students/page.tsx (70:17) @ loadStudents
+  68 |
+  69 |       if (officerError) {
+> 70 |         console.error('Error loading officer data:', officerError)
+     |                 ^
+  71 |         return
+  72 |       }
+  73 |
+Call Stack
+4
+Show 3 ignore-listed frame(s)
+loadStudents
+src/app/department/students/page.tsx (70:17)
+
+I get these ones when I try to logout
+
+Console Error
+Error loading officer data: {}
+src/app/department/settings/page.tsx (66:17) @ loadSettings
+  64 |
+  65 |       if (officerError) {
+> 66 |         console.error('Error loading officer data:', officerError)
+     |                 ^
+  67 |         return
+  68 |       }
+  69 |
+Call Stack
+4
+Show 3 ignore-listed frame(s)
+loadSettings
+src/app/department/settings/page.tsx (66:17)
+
+Console Error
+Error loading officer data: {}
+src/app/department/settings/page.tsx (66:17) @ loadSettings
+
+  64 |
+  65 |       if (officerError) {
+> 66 |         console.error('Error loading officer data:', officerError)
+     |                 ^
+  67 |         return
+  68 |       }
+  69 |
+Call Stack
+4
+Show 3 ignore-listed frame(s)
+loadSettings
+src/app/department/settings/page.tsx (66:17)
+
+
+
+
+
+Still getting this error when I want to logout. Looks like I do succeed to logout but I still get htis error
+Runtime Error
+
+
+Error: Cannot read properties of null (reading 'name')
+
+src/components/layout/DashboardLayout.tsx (293:25) @ DashboardLayout
+
+
+  291 |               <div className="w-10 h-10 bg-primary rounded-full flex items-center justify-center">
+  292 |                 <span className="text-white text-sm font-medium">
+> 293 |                   {user.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
+      |                         ^
+  294 |                 </span>
+  295 |               </div>
+  296 |               <div className="flex-1 min-w-0">
+Call Stack
+3
+
+Show 1 ignore-listed frame(s)
+DashboardLayout
+src/components/layout/DashboardLayout.tsx (293:25)
+DepartmentSettings
+src/app/department/settings/page.tsx (175:7)
+
+
+Runtime Error
+
+
+Error: Cannot read properties of null (reading 'name')
+
+src/components/layout/DashboardLayout.tsx (293:25) @ DashboardLayout
+
+
+  291 |               <div className="w-10 h-10 bg-primary rounded-full flex items-center justify-center">
+  292 |                 <span className="text-white text-sm font-medium">
+> 293 |                   {user.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
+      |                         ^
+  294 |                 </span>
+  295 |               </div>
+  296 |               <div className="flex-1 min-w-0">
+Call Stack
+3
+
+Show 1 ignore-listed frame(s)
+DashboardLayout
+src/components/layout/DashboardLayout.tsx (293:25)
+DepartmentSettings
+src/app/department/settings/page.tsx (175:7)

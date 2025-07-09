@@ -63,7 +63,7 @@ export default function DepartmentStudentsPage() {
           *,
           departments(*)
         `)
-        .eq('user_id', user.id)
+        .eq('id', user.id)
         .single()
 
       if (officerError) {
@@ -71,9 +71,16 @@ export default function DepartmentStudentsPage() {
         return
       }
 
+      if (!officerData) {
+        console.error('No officer data found for user:', user.id)
+        return
+      }
+
+      console.log('Officer data loaded:', officerData)
       setDepartmentInfo(officerData)
 
       // Load students in the department
+      console.log('Loading students for department:', officerData.department_id)
       const { data: studentsData, error: studentsError } = await supabase
         .from('students')
         .select(`
@@ -93,13 +100,34 @@ export default function DepartmentStudentsPage() {
         return
       }
 
+      console.log('Students data loaded:', studentsData)
+      console.log('Number of students found:', studentsData?.length || 0)
+
+      if (!studentsData || studentsData.length === 0) {
+        console.log('No students found for department:', officerData.department_id)
+        setStudents([])
+        return
+      }
+
       // Get complaint counts for each student
       const studentsWithComplaints = await Promise.all(
         studentsData.map(async (student) => {
+          if (!student.users?.id) {
+            console.warn('Student missing user ID:', student)
+            return {
+              ...student,
+              complaintStats: { total: 0, pending: 0, resolved: 0 }
+            }
+          }
+
           const { data: complaints, error: complaintsError } = await supabase
             .from('complaints')
             .select('id, status')
             .eq('student_id', student.users.id)
+
+          if (complaintsError) {
+            console.error('Error loading complaints for student:', student.users.name, complaintsError)
+          }
 
           const complaintStats = {
             total: complaints?.length || 0,
@@ -114,6 +142,7 @@ export default function DepartmentStudentsPage() {
         })
       )
 
+      console.log('Students with complaint stats:', studentsWithComplaints)
       setStudents(studentsWithComplaints)
 
       // Get total complaints count for this department
@@ -344,7 +373,7 @@ export default function DepartmentStudentsPage() {
                 <label className="block text-sm font-medium text-gray-700 mb-2">Year of Study</label>
                 <Select
                   value={yearFilter}
-                  onValueChange={setYearFilter}
+                  onChange={(e) => setYearFilter(e.target.value)}
                   options={yearOptions}
                 />
               </div>
@@ -352,7 +381,7 @@ export default function DepartmentStudentsPage() {
                 <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
                 <Select
                   value={statusFilter}
-                  onValueChange={setStatusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value)}
                   options={statusOptions}
                 />
               </div>

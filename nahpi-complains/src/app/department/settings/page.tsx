@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { DashboardLayout } from '@/components/layout/DashboardLayout'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
@@ -10,6 +11,7 @@ import { supabase } from '@/lib/supabase'
 
 export default function DepartmentSettings() {
   const { user, logout } = useAuth()
+  const router = useRouter()
   const [departmentInfo, setDepartmentInfo] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -57,7 +59,7 @@ export default function DepartmentSettings() {
           departments(*),
           users(*)
         `)
-        .eq('user_id', user.id)
+        .eq('id', user.id)
         .single()
 
       if (officerError) {
@@ -160,8 +162,11 @@ export default function DepartmentSettings() {
   const handleLogout = async () => {
     try {
       await logout()
+      router.push('/login')
     } catch (error) {
       console.error('Error logging out:', error)
+      // Still redirect even if logout fails
+      router.push('/login')
     }
   }
 

@@ -2,9 +2,10 @@
 
 import React, { useState } from 'react'
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
+import { useAuth } from '@/contexts/AuthContext'
 import { Footer } from '@/components/layout/Footer'
 import { cn } from '@/lib/utils'
 
@@ -143,6 +144,8 @@ export function DashboardLayout({ children, user, notifications = 0, complaintsB
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [expandedItems, setExpandedItems] = useState<string[]>([])
   const pathname = usePathname()
+  const router = useRouter()
+  const { logout } = useAuth()
 
   // Update department navigation with dynamic badge
   const updatedDepartmentNavigation = departmentNavigation.map(item => {
@@ -152,14 +155,23 @@ export function DashboardLayout({ children, user, notifications = 0, complaintsB
     return item
   })
 
-  const navigation = user.role === 'admin' ? adminNavigation : updatedDepartmentNavigation
+  const navigation = user?.role === 'admin' ? adminNavigation : updatedDepartmentNavigation
 
   const toggleExpanded = (itemName: string) => {
-    setExpandedItems(prev => 
-      prev.includes(itemName) 
+    setExpandedItems(prev =>
+      prev.includes(itemName)
         ? prev.filter(item => item !== itemName)
         : [...prev, itemName]
     )
+  }
+
+  const handleLogout = async () => {
+    try {
+      await logout()
+      router.push('/login')
+    } catch (error) {
+      console.error('Error logging out:', error)
+    }
   }
 
   const isActive = (href: string) => {
@@ -251,7 +263,7 @@ export function DashboardLayout({ children, user, notifications = 0, complaintsB
               </div>
               <div>
                 <h1 className="text-lg font-bold text-primary">NAHPi Complains</h1>
-                <p className="text-xs text-gray-500 capitalize">{user.role.replace('_', ' ')}</p>
+                <p className="text-xs text-gray-500 capitalize">{user?.role?.replace('_', ' ') || 'User'}</p>
               </div>
             </Link>
             <Button
@@ -289,7 +301,12 @@ export function DashboardLayout({ children, user, notifications = 0, complaintsB
                 )}
               </div>
             </div>
-            <Button variant="ghost" size="sm" className="w-full mt-3 justify-start text-gray-600 hover:text-gray-800 hover:bg-gray-100">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="w-full mt-3 justify-start text-gray-600 hover:text-gray-800 hover:bg-gray-100"
+              onClick={handleLogout}
+            >
               <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
               </svg>

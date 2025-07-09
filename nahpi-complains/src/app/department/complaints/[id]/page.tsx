@@ -11,6 +11,7 @@ import { Textarea } from '@/components/ui/Textarea'
 import { Select } from '@/components/ui/Select'
 import { useAuth } from '@/contexts/AuthContext'
 import { ComplaintService } from '@/lib/complaints'
+import { EmailService } from '@/lib/emailService'
 import { supabase } from '@/lib/supabase'
 import { ComplaintStatus } from '@/types'
 import { WorkflowService } from '@/lib/workflow'
@@ -185,6 +186,28 @@ export default function DepartmentComplaintDetailPage() {
             responseText,
             false // Not internal
           )
+        }
+
+        // Send email notification for resolved or rejected complaints
+        if ((newStatus === 'resolved' || newStatus === 'rejected') && responseText.trim()) {
+          try {
+            const emailResult = await EmailService.sendComplaintStatusEmail(
+              complaint.id,
+              newStatus,
+              responseText,
+              user?.name || 'Department Officer'
+            )
+
+            if (emailResult.success) {
+              console.log('✅ Email notification sent successfully')
+            } else {
+              console.error('❌ Failed to send email notification:', emailResult.error)
+              // Don't fail the entire operation if email fails
+            }
+          } catch (emailError) {
+            console.error('❌ Email service error:', emailError)
+            // Continue with the operation even if email fails
+          }
         }
 
         // Reload complaint data
