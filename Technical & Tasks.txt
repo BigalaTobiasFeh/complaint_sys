@@ -85,9 +85,9 @@ The departments are:
 
 
 
-admin - admin123
-dept - dept123
-stu - student123
+admin01@nahpi.edu - admin123
+officer.com@nahpi.edu - dept123
+UBa25T1000 - Nahpi$hust123
 
 
 admin01@nahpi.edu - admin123
