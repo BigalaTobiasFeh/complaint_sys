@@ -10,7 +10,7 @@ color code: #08387F
         ◦ Receive updates (through email with link to uba website to login and view updated transcript)
         ◦ Give feedback
     2. Admin (School management)
-        ◦ Manage user accounts (Block student accounts, Create departments and department accounts)
+        ◦ Manage user accounts (Block student accounts, Create departments and department officer accounts)
         ◦ Login (With Email/Username and Password)
         ◦ Set Datelines for submissions
         ◦ View all complaints, details and status
@@ -77,17 +77,23 @@ The departments are:
     -Centre for Cybersecurity and Mathematical Cryptology - CMC
     -Chemical and Biological Engineering - CBE
     -Civil Engineering and Architecture - CVL
-    -Computer Engineering  - COM
+   *-Computer Engineering  - COM 
     -Electrical and Electronics Engineering - EEEE
     -Mechanical and Industrial Engineering - MEC
     -Mining and Mineral Engineering - MIN
     -Petroleum Engineering - PET
 
 
-
+ADMINISTRATORS
 admin01@nahpi.edu - admin123
+
+DEPARTMENT OFFICERS
 officer.com@nahpi.edu - dept123
+officer.pet@nahpi.edu - pet123
+
+STUDENTS
 UBa25T1000 - Nahpi$hust123
+UBa25T1001 - Nahpi$hust1234
 
 
-admin01@nahpi.edu - admin123
+fa78e1f6-849d-4262-bd0e-2949740bdabc
