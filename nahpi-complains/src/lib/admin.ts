@@ -359,4 +359,61 @@ export class AdminService {
       return { success: false, error: error.message }
     }
   }
+
+  // Get recent complaints with all details
+  static async getRecentComplaints(limit = 5) {
+    try {
+      const { data: complaints, error } = await supabase
+        .from('complaints')
+        .select(`
+          id,
+          complaint_id,
+          title,
+          status,
+          priority,
+          submitted_at,
+          department_id,
+          student_id,
+          departments(name, code),
+          students(
+            matricule,
+            users(name, email)
+          )
+        `)
+        .order('submitted_at', { ascending: false })
+        .limit(limit)
+
+      if (error) throw error
+
+      // Format the complaints for display
+      const formattedComplaints = complaints.map(complaint => {
+        // Check if complaint is overdue
+        const isOverdue = DeadlineService.isOverdue(
+          new Date(complaint.submitted_at),
+          complaint.category || 'general',
+          complaint.status
+        )
+
+        return {
+          id: complaint.id,
+          complaint_id: complaint.complaint_id,
+          title: complaint.title,
+          student_name: complaint.students?.users?.name || 'Unknown Student',
+          department_name: complaint.departments?.name || 'Unknown Department',
+          status: complaint.status,
+          priority: complaint.priority || 'medium',
+          submitted_at: complaint.submitted_at,
+          is_overdue: isOverdue
+        }
+      })
+
+      return {
+        success: true,
+        complaints: formattedComplaints
+      }
+    } catch (error: any) {
+      console.error('Error getting recent complaints:', error)
+      return { success: false, error: error.message }
+    }
+  }
 }

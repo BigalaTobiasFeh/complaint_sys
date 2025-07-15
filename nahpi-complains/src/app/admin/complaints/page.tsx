@@ -1,85 +1,55 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { DashboardLayout } from '@/components/layout/DashboardLayout'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Badge } from '@/components/ui/Badge'
+import { Select } from '@/components/ui/Select'
+import { AdminService } from '@/lib/admin'
+import { useAuth } from '@/contexts/AuthContext'
+import { supabase } from '@/lib/supabase'
 
-const mockUser = {
-  name: 'Sarah Johnson',
-  role: 'admin' as const,
-  email: 'sarah.johnson@nahpi.edu',
-  avatar: undefined
+// Complaint interface for real data
+interface Complaint {
+  id: string
+  complaint_id: string
+  title: string
+  student: {
+    id: string
+    name: string
+    email: string
+    matricule: string
+  }
+  department: {
+    id: string
+    name: string
+    code: string
+  }
+  status: 'pending' | 'in_progress' | 'resolved' | 'rejected'
+  priority: 'low' | 'medium' | 'high'
+  submitted_at: string
+  updated_at: string
+  course_code: string
+  course_title: string
+  category: string
+  is_overdue: boolean
+  days_open: number
+  description?: string
+  response?: string
 }
 
-const mockComplaints = [
-  {
-    id: '1',
-    complaintId: 'CMP-2024-156',
-    title: 'CA Mark Discrepancy in Advanced Mathematics',
-    student: { name: 'John Doe', email: 'john.doe@student.nahpi.edu', matricule: 'STU2024001' },
-    department: 'Mathematics',
-    status: 'pending' as const,
-    priority: 'high' as const,
-    submittedAt: new Date('2024-01-20'),
-    updatedAt: new Date('2024-01-20'),
-    courseCode: 'MATH401',
-    category: 'ca_mark' as const,
-    isOverdue: false,
-    daysOpen: 1
-  },
-  {
-    id: '2',
-    complaintId: 'CMP-2024-155',
-    title: 'Exam Mark Query for Physics II',
-    student: { name: 'Jane Smith', email: 'jane.smith@student.nahpi.edu', matricule: 'STU2024002' },
-    department: 'Physics',
-    status: 'pending' as const,
-    priority: 'medium' as const,
-    submittedAt: new Date('2024-01-19'),
-    updatedAt: new Date('2024-01-19'),
-    courseCode: 'PHYS201',
-    category: 'exam_mark' as const,
-    isOverdue: false,
-    daysOpen: 2
-  },
-  {
-    id: '3',
-    complaintId: 'CMP-2024-154',
-    title: 'Course Registration System Error',
-    student: { name: 'Mike Wilson', email: 'mike.wilson@student.nahpi.edu', matricule: 'STU2024003' },
-    department: 'Computer Science',
-    status: 'in_progress' as const,
-    priority: 'high' as const,
-    submittedAt: new Date('2024-01-18'),
-    updatedAt: new Date('2024-01-19'),
-    courseCode: 'CS301',
-    category: 'other' as const,
-    isOverdue: true,
-    daysOpen: 3
-  },
-  {
-    id: '4',
-    complaintId: 'CMP-2024-153',
-    title: 'Missing Assignment Grade Entry',
-    student: { name: 'Sarah Davis', email: 'sarah.davis@student.nahpi.edu', matricule: 'STU2024004' },
-    department: 'Engineering',
-    status: 'resolved' as const,
-    priority: 'low' as const,
-    submittedAt: new Date('2024-01-15'),
-    updatedAt: new Date('2024-01-17'),
-    courseCode: 'ENG201',
-    category: 'ca_mark' as const,
-    isOverdue: false,
-    daysOpen: 6
-  }
-]
+// Filter options
+interface FilterOptions {
+  departments: Array<{ value: string; label: string }>
+  statuses: Array<{ value: string; label: string }>
+  priorities: Array<{ value: string; label: string }>
+  categories: Array<{ value: string; label: string }>
+}
 
-const departments = ['All Departments', 'Computer Science', 'Mathematics', 'Physics', 'Engineering', 'Business']
-
+// Utility functions
 function getStatusColor(status: string) {
   switch (status) {
     case 'pending':
@@ -102,287 +72,492 @@ function getPriorityColor(priority: string) {
     case 'medium':
       return 'warning'
     case 'low':
-      return 'secondary'
+      return 'success'
     default:
       return 'default'
   }
 }
 
-function formatDate(date: Date) {
-  return date.toLocaleDateString('en-US', {
+function formatDate(dateString: string) {
+  return new Date(dateString).toLocaleDateString('en-US', {
     year: 'numeric',
     month: 'short',
     day: 'numeric'
   })
 }
 
-export default function AdminComplaintsPage() {
+function calculateDaysOpen(submittedAt: string): number {
+  const submitted = new Date(submittedAt)
+  const now = new Date()
+  const diffTime = Math.abs(now.getTime() - submitted.getTime())
+  return Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+}
+
+export default function AdminComplaintsEnhanced() {
+  const { user } = useAuth()
+  const [complaints, setComplaints] = useState<Complaint[]>([])
+  const [filterOptions, setFilterOptions] = useState<FilterOptions>({
+    departments: [],
+    statuses: [],
+    priorities: [],
+    categories: []
+  })
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  
+  // Filter states
   const [searchTerm, setSearchTerm] = useState('')
-  const [statusFilter, setStatusFilter] = useState('')
-  const [departmentFilter, setDepartmentFilter] = useState('')
+  const [statusFilter, setStatusFilter] = useState('all')
+  const [departmentFilter, setDepartmentFilter] = useState('all')
+  const [priorityFilter, setPriorityFilter] = useState('all')
+  const [categoryFilter, setCategoryFilter] = useState('all')
   const [selectedComplaints, setSelectedComplaints] = useState<string[]>([])
+  
+  // Pagination
+  const [currentPage, setCurrentPage] = useState(1)
+  const [itemsPerPage] = useState(10)
 
-  const filteredComplaints = mockComplaints.filter(complaint => {
-    const matchesSearch = complaint.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         complaint.complaintId.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         complaint.student.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         complaint.courseCode.toLowerCase().includes(searchTerm.toLowerCase())
+  // Load complaints and filter options
+  useEffect(() => {
+    loadComplaints()
+    loadFilterOptions()
+  }, [])
 
-    const matchesStatus = !statusFilter || complaint.status === statusFilter
-    const matchesDepartment = !departmentFilter || departmentFilter === 'All Departments' || complaint.department === departmentFilter
+  const loadComplaints = async () => {
+    try {
+      setLoading(true)
+      setError(null)
 
-    return matchesSearch && matchesStatus && matchesDepartment
+      const { data: complaintsData, error: complaintsError } = await supabase
+        .from('complaints')
+        .select(`
+          id,
+          complaint_id,
+          title,
+          status,
+          priority,
+          submitted_at,
+          updated_at,
+          course_code,
+          course_title,
+          category,
+          description,
+          department_id,
+          student_id,
+          departments(
+            id,
+            name,
+            code
+          ),
+          students(
+            id,
+            matricule,
+            users(
+              id,
+              name,
+              email
+            )
+          )
+        `)
+        .order('submitted_at', { ascending: false })
+
+      if (complaintsError) throw complaintsError
+
+      // Format complaints data
+      const formattedComplaints: Complaint[] = complaintsData.map(complaint => ({
+        id: complaint.id,
+        complaint_id: complaint.complaint_id,
+        title: complaint.title,
+        student: {
+          id: complaint.students?.id || '',
+          name: complaint.students?.users?.name || 'Unknown Student',
+          email: complaint.students?.users?.email || '',
+          matricule: complaint.students?.matricule || ''
+        },
+        department: {
+          id: complaint.departments?.id || '',
+          name: complaint.departments?.name || 'Unknown Department',
+          code: complaint.departments?.code || ''
+        },
+        status: complaint.status,
+        priority: complaint.priority || 'medium',
+        submitted_at: complaint.submitted_at,
+        updated_at: complaint.updated_at,
+        course_code: complaint.course_code || '',
+        course_title: complaint.course_title || '',
+        category: complaint.category || 'general',
+        is_overdue: false, // TODO: Calculate based on deadlines
+        days_open: calculateDaysOpen(complaint.submitted_at),
+        description: complaint.description
+      }))
+
+      setComplaints(formattedComplaints)
+    } catch (error: any) {
+      console.error('Error loading complaints:', error)
+      setError(error.message || 'Failed to load complaints')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const loadFilterOptions = async () => {
+    try {
+      // Load departments
+      const { data: departments, error: deptError } = await supabase
+        .from('departments')
+        .select('id, name, code')
+        .order('name')
+
+      if (!deptError && departments) {
+        const deptOptions = [
+          { value: 'all', label: 'All Departments' },
+          ...departments.map(dept => ({
+            value: dept.id,
+            label: dept.name
+          }))
+        ]
+        
+        setFilterOptions(prev => ({
+          ...prev,
+          departments: deptOptions,
+          statuses: [
+            { value: 'all', label: 'All Statuses' },
+            { value: 'pending', label: 'Pending' },
+            { value: 'in_progress', label: 'In Progress' },
+            { value: 'resolved', label: 'Resolved' },
+            { value: 'rejected', label: 'Rejected' }
+          ],
+          priorities: [
+            { value: 'all', label: 'All Priorities' },
+            { value: 'high', label: 'High' },
+            { value: 'medium', label: 'Medium' },
+            { value: 'low', label: 'Low' }
+          ],
+          categories: [
+            { value: 'all', label: 'All Categories' },
+            { value: 'ca_mark', label: 'CA Mark' },
+            { value: 'exam_mark', label: 'Exam Mark' },
+            { value: 'final_grade', label: 'Final Grade' },
+            { value: 'other', label: 'Other' }
+          ]
+        }))
+      }
+    } catch (error) {
+      console.error('Error loading filter options:', error)
+    }
+  }
+
+  // Filter complaints
+  const filteredComplaints = complaints.filter(complaint => {
+    const matchesSearch = 
+      complaint.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      complaint.complaint_id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      complaint.student.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      complaint.course_code.toLowerCase().includes(searchTerm.toLowerCase())
+
+    const matchesStatus = statusFilter === 'all' || complaint.status === statusFilter
+    const matchesDepartment = departmentFilter === 'all' || complaint.department.id === departmentFilter
+    const matchesPriority = priorityFilter === 'all' || complaint.priority === priorityFilter
+    const matchesCategory = categoryFilter === 'all' || complaint.category === categoryFilter
+
+    return matchesSearch && matchesStatus && matchesDepartment && matchesPriority && matchesCategory
   })
 
-  const handleSelectComplaint = (complaintId: string) => {
+  // Pagination
+  const totalPages = Math.ceil(filteredComplaints.length / itemsPerPage)
+  const startIndex = (currentPage - 1) * itemsPerPage
+  const paginatedComplaints = filteredComplaints.slice(startIndex, startIndex + itemsPerPage)
+
+  // Selection handlers
+  const handleSelectAll = () => {
+    if (selectedComplaints.length === paginatedComplaints.length) {
+      setSelectedComplaints([])
+    } else {
+      setSelectedComplaints(paginatedComplaints.map(c => c.id))
+    }
+  }
+
+  const handleSelectComplaint = (id: string) => {
     setSelectedComplaints(prev => 
-      prev.includes(complaintId) 
-        ? prev.filter(id => id !== complaintId)
-        : [...prev, complaintId]
+      prev.includes(id) 
+        ? prev.filter(cId => cId !== id)
+        : [...prev, id]
     )
   }
 
-  const handleSelectAll = () => {
-    if (selectedComplaints.length === filteredComplaints.length) {
+  // Bulk actions
+  const handleBulkStatusUpdate = async (newStatus: string) => {
+    try {
+      const { error } = await supabase
+        .from('complaints')
+        .update({ status: newStatus, updated_at: new Date().toISOString() })
+        .in('id', selectedComplaints)
+
+      if (error) throw error
+
+      await loadComplaints()
       setSelectedComplaints([])
-    } else {
-      setSelectedComplaints(filteredComplaints.map(c => c.id))
+      alert(`Successfully updated ${selectedComplaints.length} complaints to ${newStatus}`)
+    } catch (error: any) {
+      console.error('Error updating complaints:', error)
+      alert('Failed to update complaints: ' + error.message)
     }
   }
 
-  const handleBulkExport = () => {
-    if (selectedComplaints.length > 0) {
-      alert(`Export ${selectedComplaints.length} complaints to CSV`)
-    }
+  const handleExport = () => {
+    const dataToExport = selectedComplaints.length > 0 
+      ? complaints.filter(c => selectedComplaints.includes(c.id))
+      : filteredComplaints
+
+    const csvContent = [
+      ['ID', 'Title', 'Student', 'Department', 'Status', 'Priority', 'Submitted', 'Days Open'].join(','),
+      ...dataToExport.map(complaint => [
+        complaint.complaint_id,
+        `"${complaint.title}"`,
+        complaint.student.name,
+        complaint.department.name,
+        complaint.status,
+        complaint.priority,
+        formatDate(complaint.submitted_at),
+        complaint.days_open
+      ].join(','))
+    ].join('\n')
+
+    const blob = new Blob([csvContent], { type: 'text/csv' })
+    const url = window.URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `complaints-${new Date().toISOString().split('T')[0]}.csv`
+    a.click()
+    window.URL.revokeObjectURL(url)
+  }
+
+  if (loading) {
+    return (
+      <DashboardLayout user={{ name: user?.name || '', role: 'admin', email: user?.email || '' }} notifications={0}>
+        <div className="p-6">
+          <div className="text-center py-12">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+            <p className="mt-4 text-gray-600">Loading complaints...</p>
+          </div>
+        </div>
+      </DashboardLayout>
+    )
+  }
+
+  if (error) {
+    return (
+      <DashboardLayout user={{ name: user?.name || '', role: 'admin', email: user?.email || '' }} notifications={0}>
+        <div className="p-6">
+          <div className="text-center py-12">
+            <div className="text-red-500 mb-4">
+              <svg className="w-12 h-12 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
+              </svg>
+            </div>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">Error Loading Complaints</h3>
+            <p className="text-gray-600 mb-4">{error}</p>
+            <Button onClick={loadComplaints}>Try Again</Button>
+          </div>
+        </div>
+      </DashboardLayout>
+    )
   }
 
   return (
-    <DashboardLayout user={mockUser} notifications={15}>
+    <DashboardLayout user={{ name: user?.name || '', role: 'admin', email: user?.email || '' }} notifications={0}>
       <div className="p-6 space-y-6">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Complaint Management</h1>
-            <p className="text-gray-600 mt-2">Monitor and manage all complaints in the system</p>
+            <h1 className="text-2xl font-bold text-gray-900">All Complaints</h1>
+            <p className="text-gray-600">Manage and review all student complaints</p>
           </div>
-          <div className="flex space-x-3 mt-4 sm:mt-0">
-            <Button
-              variant="outline"
-              onClick={handleBulkExport}
-              disabled={selectedComplaints.length === 0}
-            >
-              Export Selected ({selectedComplaints.length})
+          <div className="flex items-center space-x-3">
+            <Button variant="outline" onClick={handleExport}>
+              Export ({selectedComplaints.length > 0 ? selectedComplaints.length : filteredComplaints.length})
             </Button>
-            <Link href="/admin/reports">
-              <Button variant="outline">Generate Report</Button>
+            <Link href="/admin/complaints/overdue">
+              <Button variant="outline">View Overdue</Button>
+            </Link>
+            <Link href="/admin/complaints/departments">
+              <Button variant="outline">By Department</Button>
             </Link>
           </div>
         </div>
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600">Total</p>
-                  <p className="text-2xl font-bold">{mockComplaints.length}</p>
-                </div>
-                <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                  <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                  </svg>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600">Pending</p>
-                  <p className="text-2xl font-bold text-warning">{mockComplaints.filter(c => c.status === 'pending').length}</p>
-                </div>
-                <div className="w-8 h-8 bg-yellow-100 rounded-full flex items-center justify-center">
-                  <svg className="w-4 h-4 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600">Overdue</p>
-                  <p className="text-2xl font-bold text-error">{mockComplaints.filter(c => c.isOverdue).length}</p>
-                </div>
-                <div className="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center">
-                  <svg className="w-4 h-4 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600">Resolved</p>
-                  <p className="text-2xl font-bold text-success">{mockComplaints.filter(c => c.status === 'resolved').length}</p>
-                </div>
-                <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
-                  <svg className="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                  </svg>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
         {/* Filters */}
         <Card>
-          <CardContent className="pt-6">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <CardHeader>
+            <CardTitle>Filters</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
               <Input
                 placeholder="Search complaints..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                leftIcon={
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                  </svg>
-                }
               />
-
-              <select
+              <Select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
-                className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-              >
-                <option value="">All Statuses</option>
-                <option value="pending">Pending</option>
-                <option value="in_progress">In Progress</option>
-                <option value="resolved">Resolved</option>
-                <option value="rejected">Rejected</option>
-              </select>
-
-              <select
+                options={filterOptions.statuses}
+              />
+              <Select
                 value={departmentFilter}
                 onChange={(e) => setDepartmentFilter(e.target.value)}
-                className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-              >
-                {departments.map(dept => (
-                  <option key={dept} value={dept}>{dept}</option>
-                ))}
-              </select>
-
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setSearchTerm('')
-                  setStatusFilter('')
-                  setDepartmentFilter('')
-                }}
-              >
-                Clear Filters
-              </Button>
+                options={filterOptions.departments}
+              />
+              <Select
+                value={priorityFilter}
+                onChange={(e) => setPriorityFilter(e.target.value)}
+                options={filterOptions.priorities}
+              />
+              <Select
+                value={categoryFilter}
+                onChange={(e) => setCategoryFilter(e.target.value)}
+                options={filterOptions.categories}
+              />
             </div>
           </CardContent>
         </Card>
+
+        {/* Bulk Actions */}
+        {selectedComplaints.length > 0 && (
+          <Card>
+            <CardContent className="py-4">
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-gray-600">
+                  {selectedComplaints.length} complaint(s) selected
+                </span>
+                <div className="flex items-center space-x-2">
+                  <Button size="sm" onClick={() => handleBulkStatusUpdate('in_progress')}>
+                    Mark In Progress
+                  </Button>
+                  <Button size="sm" onClick={() => handleBulkStatusUpdate('resolved')}>
+                    Mark Resolved
+                  </Button>
+                  <Button size="sm" variant="outline" onClick={() => handleBulkStatusUpdate('rejected')}>
+                    Mark Rejected
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Complaints Table */}
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between">
-              <div>
-                <CardTitle>Complaints ({filteredComplaints.length})</CardTitle>
-                <CardDescription>Manage and assign complaints to department officers</CardDescription>
-              </div>
+              <CardTitle>
+                Complaints ({filteredComplaints.length})
+              </CardTitle>
               <div className="flex items-center space-x-2">
                 <input
                   type="checkbox"
-                  checked={selectedComplaints.length === filteredComplaints.length && filteredComplaints.length > 0}
+                  checked={selectedComplaints.length === paginatedComplaints.length && paginatedComplaints.length > 0}
                   onChange={handleSelectAll}
-                  className="rounded border-gray-300 text-primary focus:ring-primary"
+                  className="rounded border-gray-300"
                 />
                 <span className="text-sm text-gray-600">Select All</span>
               </div>
             </div>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              {filteredComplaints.length === 0 ? (
-                <div className="text-center py-12">
-                  <svg className="w-12 h-12 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                  </svg>
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">No complaints found</h3>
-                  <p className="text-gray-600">No complaints match your current filters.</p>
-                </div>
-              ) : (
-                filteredComplaints.map((complaint) => (
-                  <div key={complaint.id} className="flex items-center space-x-4 p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
-                    <input
-                      type="checkbox"
-                      checked={selectedComplaints.includes(complaint.id)}
-                      onChange={() => handleSelectComplaint(complaint.id)}
-                      className="rounded border-gray-300 text-primary focus:ring-primary"
-                    />
-                    
-                    <div className="flex-1">
-                      <div className="flex items-center space-x-3 mb-2">
-                        <h3 className="font-semibold text-gray-900">{complaint.title}</h3>
-                        <Badge variant={getStatusColor(complaint.status)} size="sm">
-                          {complaint.status.replace('_', ' ')}
-                        </Badge>
-                        <Badge variant={getPriorityColor(complaint.priority)} size="sm">
-                          {complaint.priority}
-                        </Badge>
-                        {complaint.isOverdue && (
-                          <Badge variant="error" size="sm">Overdue</Badge>
-                        )}
+            {paginatedComplaints.length === 0 ? (
+              <div className="text-center py-8">
+                <p className="text-gray-500">No complaints found matching your filters.</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {paginatedComplaints.map((complaint) => (
+                  <div key={complaint.id} className="border border-gray-200 rounded-lg p-4">
+                    <div className="flex items-start space-x-4">
+                      <input
+                        type="checkbox"
+                        checked={selectedComplaints.includes(complaint.id)}
+                        onChange={() => handleSelectComplaint(complaint.id)}
+                        className="mt-1 rounded border-gray-300"
+                      />
+                      <div className="flex-1">
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="flex items-center space-x-2">
+                            <h3 className="font-medium text-gray-900">{complaint.title}</h3>
+                            {complaint.is_overdue && (
+                              <Badge variant="error" size="sm">Overdue</Badge>
+                            )}
+                          </div>
+                          <Link href={`/admin/complaints/${complaint.id}`}>
+                            <Button variant="ghost" size="sm">View Details</Button>
+                          </Link>
+                        </div>
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm text-gray-600 mb-3">
+                          <div>
+                            <span className="font-medium">ID:</span> {complaint.complaint_id}
+                          </div>
+                          <div>
+                            <span className="font-medium">Student:</span> {complaint.student.name}
+                          </div>
+                          <div>
+                            <span className="font-medium">Department:</span> {complaint.department.name}
+                          </div>
+                          <div>
+                            <span className="font-medium">Course:</span> {complaint.course_code}
+                          </div>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center space-x-2">
+                            <Badge variant={getStatusColor(complaint.status)} size="sm">
+                              {complaint.status.replace('_', ' ')}
+                            </Badge>
+                            <Badge variant={getPriorityColor(complaint.priority)} size="sm">
+                              {complaint.priority}
+                            </Badge>
+                            <span className="text-xs text-gray-500">
+                              {complaint.days_open} days open
+                            </span>
+                          </div>
+                          <div className="text-xs text-gray-500">
+                            Submitted: {formatDate(complaint.submitted_at)}
+                          </div>
+                        </div>
                       </div>
-                      
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm text-gray-600 mb-2">
-                        <div>
-                          <span className="font-medium">ID:</span> {complaint.complaintId}
-                        </div>
-                        <div>
-                          <span className="font-medium">Student:</span> {complaint.student.name}
-                        </div>
-                        <div>
-                          <span className="font-medium">Course:</span> {complaint.courseCode}
-                        </div>
-                        <div>
-                          <span className="font-medium">Department:</span> {complaint.department}
-                        </div>
-                      </div>
-                      
-                      <div className="flex items-center space-x-4 text-sm text-gray-500">
-                        <span>Submitted: {formatDate(complaint.submittedAt)}</span>
-                        <span>Updated: {formatDate(complaint.updatedAt)}</span>
-                        <span>{complaint.daysOpen} days open</span>
-                        <span>Category: <span className="font-medium">{complaint.category.replace('_', ' ')}</span></span>
-                      </div>
-                    </div>
-
-                    <div className="flex flex-col space-y-2">
-                      <Link href={`/admin/complaints/${complaint.id}`}>
-                        <Button variant="outline" size="sm">View Details</Button>
-                      </Link>
-                      <Button variant="ghost" size="sm">Contact Student</Button>
                     </div>
                   </div>
-                ))
-              )}
-            </div>
+                ))}
+              </div>
+            )}
+
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="flex items-center justify-between mt-6">
+                <div className="text-sm text-gray-600">
+                  Showing {startIndex + 1} to {Math.min(startIndex + itemsPerPage, filteredComplaints.length)} of {filteredComplaints.length} complaints
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                    disabled={currentPage === 1}
+                  >
+                    Previous
+                  </Button>
+                  <span className="text-sm text-gray-600">
+                    Page {currentPage} of {totalPages}
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                    disabled={currentPage === totalPages}
+                  >
+                    Next
+                  </Button>
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>

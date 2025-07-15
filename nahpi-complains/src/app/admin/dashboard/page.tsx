@@ -9,70 +9,66 @@ import { Badge } from '@/components/ui/Badge'
 import { useAuth } from '@/contexts/AuthContext'
 import { AdminService } from '@/lib/admin'
 
-// Mock data
-const mockUser = {
-  name: 'Sarah Johnson',
-  role: 'admin' as const,
-  email: 'sarah.johnson@nahpi.edu',
-  avatar: undefined
-}
-
-const mockStats = {
-  totalComplaints: 156,
-  pendingComplaints: 23,
-  inProgressComplaints: 18,
-  resolvedComplaints: 98,
-  rejectedComplaints: 17,
-  overdueComplaints: 8,
-  totalUsers: 1247,
-  totalStudents: 1198,
-  totalOfficers: 45,
-  totalDepartments: 12,
-  averageResolutionTime: 4.2
-}
-
-const mockRecentComplaints = [
-  {
-    id: '1',
-    complaintId: 'CMP-2024-156',
-    title: 'CA Mark Discrepancy in Advanced Mathematics',
-    student: 'John Doe',
-    department: 'Mathematics',
-    status: 'pending' as const,
-    priority: 'high' as const,
-    submittedAt: new Date('2024-01-20'),
-    isOverdue: false
-  },
-  {
-    id: '2',
-    complaintId: 'CMP-2024-155',
-    title: 'Exam Mark Query for Physics II',
-    student: 'Jane Smith',
-    department: 'Physics',
-    status: 'in_progress' as const,
-    priority: 'medium' as const,
-    submittedAt: new Date('2024-01-19'),
-    isOverdue: true
-  },
-  {
-    id: '3',
-    complaintId: 'CMP-2024-154',
-    title: 'Course Registration System Error',
-    student: 'Mike Wilson',
-    department: 'Computer Science',
-    status: 'pending' as const,
-    priority: 'high' as const,
-    submittedAt: new Date('2024-01-18'),
-    isOverdue: false
+// Real-time data interfaces
+interface SystemStats {
+  complaints: {
+    total: number
+    pending: number
+    inProgress: number
+    resolved: number
+    rejected: number
+    overdue: number
+    averageResolutionTime: number
+    resolutionRate: number
   }
-]
+  users: {
+    totalUsers: number
+    students: number
+    departmentOfficers: number
+    admins: number
+  }
+  departments: {
+    total: number
+    active: number
+  }
+}
 
-const mockDepartmentStats = [
-  { name: 'Computer Science', complaints: 34, resolved: 28, pending: 6, officers: 8 },
-  { name: 'Mathematics', complaints: 28, resolved: 22, pending: 6, officers: 6 },
-  { name: 'Physics', complaints: 22, resolved: 18, pending: 4, officers: 5 },
-  { name: 'Engineering', complaints: 19, resolved: 15, pending: 4, officers: 7 }
-]
+interface RecentComplaint {
+  id: string
+  complaint_id: string
+  title: string
+  student_name: string
+  department_name: string
+  status: 'pending' | 'in_progress' | 'resolved' | 'rejected'
+  priority: 'low' | 'medium' | 'high'
+  submitted_at: string
+  is_overdue: boolean
+}
+
+interface DepartmentStats {
+  name: string
+  code: string
+  total_complaints: number
+  resolved_complaints: number
+  pending_complaints: number
+  in_progress_complaints: number
+  total_officers: number
+  resolution_rate: number
+}
+
+interface ComplaintTrend {
+  date: string
+  total: number
+  pending: number
+  resolved: number
+  rejected: number
+}
+
+
+
+
+
+
 
 function getStatusColor(status: string) {
   switch (status) {
@@ -114,10 +110,12 @@ function formatDate(date: Date) {
 
 export default function AdminDashboard() {
   const { user } = useAuth()
-  const [systemStats, setSystemStats] = useState<any>(null)
-  const [departmentAnalytics, setDepartmentAnalytics] = useState<any[]>([])
-  const [complaintTrends, setComplaintTrends] = useState<any[]>([])
+  const [systemStats, setSystemStats] = useState<SystemStats | null>(null)
+  const [departmentAnalytics, setDepartmentAnalytics] = useState<DepartmentStats[]>([])
+  const [recentComplaints, setRecentComplaints] = useState<RecentComplaint[]>([])
+  const [complaintTrends, setComplaintTrends] = useState<ComplaintTrend[]>([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     if (user) {
@@ -127,25 +125,42 @@ export default function AdminDashboard() {
 
   const loadDashboardData = async () => {
     try {
+      setError(null)
+
       // Load system statistics
       const statsResult = await AdminService.getSystemStats()
       if (statsResult.success) {
         setSystemStats(statsResult.stats)
+      } else {
+        console.error('Failed to load system stats:', statsResult.error)
       }
 
       // Load department analytics
       const analyticsResult = await AdminService.getDepartmentAnalytics()
       if (analyticsResult.success && analyticsResult.analytics) {
         setDepartmentAnalytics(analyticsResult.analytics)
+      } else {
+        console.error('Failed to load department analytics:', analyticsResult.error)
+      }
+
+      // Load recent complaints
+      const recentResult = await AdminService.getRecentComplaints(5)
+      if (recentResult.success && recentResult.complaints) {
+        setRecentComplaints(recentResult.complaints)
+      } else {
+        console.error('Failed to load recent complaints:', recentResult.error)
       }
 
       // Load complaint trends
       const trendsResult = await AdminService.getComplaintTrends(30)
       if (trendsResult.success && trendsResult.trends) {
         setComplaintTrends(trendsResult.trends)
+      } else {
+        console.error('Failed to load complaint trends:', trendsResult.error)
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error loading dashboard data:', error)
+      setError(error.message || 'Failed to load dashboard data')
     } finally {
       setLoading(false)
     }
@@ -168,6 +183,25 @@ export default function AdminDashboard() {
           <div className="text-center py-12">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
             <p className="mt-4 text-gray-600">Loading dashboard...</p>
+          </div>
+        </div>
+      </DashboardLayout>
+    )
+  }
+
+  if (error) {
+    return (
+      <DashboardLayout user={{ name: user.name, role: 'admin', email: user.email }} notifications={0}>
+        <div className="p-6">
+          <div className="text-center py-12">
+            <div className="text-red-500 mb-4">
+              <svg className="w-12 h-12 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
+              </svg>
+            </div>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">Error Loading Dashboard</h3>
+            <p className="text-gray-600 mb-4">{error}</p>
+            <Button onClick={loadDashboardData}>Try Again</Button>
           </div>
         </div>
       </DashboardLayout>
@@ -256,19 +290,19 @@ export default function AdminDashboard() {
             <CardContent>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div className="text-center p-4 bg-yellow-50 rounded-lg">
-                  <div className="text-2xl font-bold text-yellow-600">{mockStats.pendingComplaints}</div>
+                  <div className="text-2xl font-bold text-yellow-600">{systemStats?.complaints?.pending || 0}</div>
                   <div className="text-sm text-yellow-700">Pending</div>
                 </div>
                 <div className="text-center p-4 bg-blue-50 rounded-lg">
-                  <div className="text-2xl font-bold text-blue-600">{mockStats.inProgressComplaints}</div>
+                  <div className="text-2xl font-bold text-blue-600">{systemStats?.complaints?.inProgress || 0}</div>
                   <div className="text-sm text-blue-700">In Progress</div>
                 </div>
                 <div className="text-center p-4 bg-green-50 rounded-lg">
-                  <div className="text-2xl font-bold text-green-600">{mockStats.resolvedComplaints}</div>
+                  <div className="text-2xl font-bold text-green-600">{systemStats?.complaints?.resolved || 0}</div>
                   <div className="text-sm text-green-700">Resolved</div>
                 </div>
                 <div className="text-center p-4 bg-red-50 rounded-lg">
-                  <div className="text-2xl font-bold text-red-600">{mockStats.rejectedComplaints}</div>
+                  <div className="text-2xl font-bold text-red-600">{systemStats?.complaints?.rejected || 0}</div>
                   <div className="text-sm text-red-700">Rejected</div>
                 </div>
               </div>
@@ -283,19 +317,19 @@ export default function AdminDashboard() {
             <CardContent className="space-y-4">
               <div className="flex items-center justify-between">
                 <span className="text-sm text-gray-600">Total Users</span>
-                <span className="font-semibold">{mockStats.totalUsers}</span>
+                <span className="font-semibold">{systemStats?.users?.totalUsers || 0}</span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-sm text-gray-600">Students</span>
-                <span className="font-semibold">{mockStats.totalStudents}</span>
+                <span className="font-semibold">{systemStats?.users?.students || 0}</span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-sm text-gray-600">Department Officers</span>
-                <span className="font-semibold">{mockStats.totalOfficers}</span>
+                <span className="font-semibold">{systemStats?.users?.departmentOfficers || 0}</span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-sm text-gray-600">Departments</span>
-                <span className="font-semibold">{mockStats.totalDepartments}</span>
+                <span className="font-semibold">{systemStats?.departments?.total || 0}</span>
               </div>
               <Link href="/admin/users">
                 <Button variant="outline" size="sm" className="w-full mt-4">
@@ -322,35 +356,41 @@ export default function AdminDashboard() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {mockRecentComplaints.map((complaint) => (
-                  <div key={complaint.id} className="flex items-center justify-between p-3 border border-gray-200 rounded-lg">
-                    <div className="flex-1">
-                      <div className="flex items-center space-x-2 mb-1">
-                        <h4 className="font-medium text-sm text-gray-900 truncate">{complaint.title}</h4>
-                        {complaint.isOverdue && (
-                          <Badge variant="error" size="sm">Overdue</Badge>
-                        )}
+                {recentComplaints.length > 0 ? (
+                  recentComplaints.map((complaint) => (
+                    <div key={complaint.id} className="flex items-center justify-between p-3 border border-gray-200 rounded-lg">
+                      <div className="flex-1">
+                        <div className="flex items-center space-x-2 mb-1">
+                          <h4 className="font-medium text-sm text-gray-900 truncate">{complaint.title}</h4>
+                          {complaint.is_overdue && (
+                            <Badge variant="error" size="sm">Overdue</Badge>
+                          )}
+                        </div>
+                        <div className="flex items-center space-x-4 text-xs text-gray-500">
+                          <span>ID: {complaint.complaint_id}</span>
+                          <span>Student: {complaint.student_name}</span>
+                          <span>{formatDate(new Date(complaint.submitted_at))}</span>
+                        </div>
+                        <div className="flex items-center space-x-2 mt-2">
+                          <Badge variant={getStatusColor(complaint.status)} size="sm">
+                            {complaint.status.replace('_', ' ')}
+                          </Badge>
+                          <Badge variant={getPriorityColor(complaint.priority)} size="sm">
+                            {complaint.priority}
+                          </Badge>
+                          <span className="text-xs text-gray-500">{complaint.department_name}</span>
+                        </div>
                       </div>
-                      <div className="flex items-center space-x-4 text-xs text-gray-500">
-                        <span>ID: {complaint.complaintId}</span>
-                        <span>Student: {complaint.student}</span>
-                        <span>{formatDate(complaint.submittedAt)}</span>
-                      </div>
-                      <div className="flex items-center space-x-2 mt-2">
-                        <Badge variant={getStatusColor(complaint.status)} size="sm">
-                          {complaint.status.replace('_', ' ')}
-                        </Badge>
-                        <Badge variant={getPriorityColor(complaint.priority)} size="sm">
-                          {complaint.priority}
-                        </Badge>
-                        <span className="text-xs text-gray-500">{complaint.department}</span>
-                      </div>
+                      <Link href={`/admin/complaints/${complaint.id}`}>
+                        <Button variant="ghost" size="sm">View</Button>
+                      </Link>
                     </div>
-                    <Link href={`/admin/complaints/${complaint.id}`}>
-                      <Button variant="ghost" size="sm">View</Button>
-                    </Link>
+                  ))
+                ) : (
+                  <div className="text-center py-6 text-gray-500">
+                    <p>No recent complaints found</p>
                   </div>
-                ))}
+                )}
               </div>
             </CardContent>
           </Card>
@@ -362,25 +402,35 @@ export default function AdminDashboard() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {mockDepartmentStats.map((dept) => (
-                  <div key={dept.name} className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium text-gray-900">{dept.name}</span>
-                      <span className="text-xs text-gray-500">{dept.officers} officers</span>
+                {departmentAnalytics.length > 0 ? (
+                  departmentAnalytics.map((dept) => (
+                    <div key={dept.name} className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-medium text-gray-900">{dept.name}</span>
+                        <span className="text-xs text-gray-500">{dept.total_officers} officers</span>
+                      </div>
+                      <div className="flex items-center space-x-2 text-xs">
+                        <span className="text-gray-600">Total: {dept.total_complaints}</span>
+                        <span className="text-green-600">Resolved: {dept.resolved_complaints}</span>
+                        <span className="text-yellow-600">Pending: {dept.pending_complaints}</span>
+                      </div>
+                      <div className="w-full bg-gray-200 rounded-full h-2">
+                        <div
+                          className="bg-green-500 h-2 rounded-full"
+                          style={{
+                            width: `${dept.total_complaints > 0
+                              ? (dept.resolved_complaints / dept.total_complaints) * 100
+                              : 0}%`
+                          }}
+                        />
+                      </div>
                     </div>
-                    <div className="flex items-center space-x-2 text-xs">
-                      <span className="text-gray-600">Total: {dept.complaints}</span>
-                      <span className="text-green-600">Resolved: {dept.resolved}</span>
-                      <span className="text-yellow-600">Pending: {dept.pending}</span>
-                    </div>
-                    <div className="w-full bg-gray-200 rounded-full h-2">
-                      <div 
-                        className="bg-green-500 h-2 rounded-full" 
-                        style={{ width: `${(dept.resolved / dept.complaints) * 100}%` }}
-                      />
-                    </div>
+                  ))
+                ) : (
+                  <div className="text-center py-6 text-gray-500">
+                    <p>No department data available</p>
                   </div>
-                ))}
+                )}
               </div>
               <Link href="/admin/departments">
                 <Button variant="outline" size="sm" className="w-full mt-4">

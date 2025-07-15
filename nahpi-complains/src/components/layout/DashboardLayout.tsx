@@ -197,18 +197,24 @@ export function DashboardLayout({ children, user, notifications = 0, complaintsB
 
     return (
       <div>
-        <Link
-          href={item.href}
-          className={cn(
-            "group flex items-center justify-between px-3 py-2 text-sm font-medium rounded-lg transition-colors",
-            level > 0 && "ml-6",
-            active
-              ? "bg-primary text-white"
-              : "text-gray-700 hover:bg-gray-100 hover:text-gray-900"
-          )}
-          onClick={() => hasChildren && toggleExpanded(item.name)}
-        >
-          <div className="flex items-center space-x-3">
+        <div className={cn(
+          "group flex items-center justify-between px-3 py-2 text-sm font-medium rounded-lg transition-colors",
+          level > 0 && "ml-6",
+          active
+            ? "bg-primary text-white"
+            : "text-gray-700 hover:bg-gray-100 hover:text-gray-900"
+        )}>
+          {/* Main content area - clickable for navigation */}
+          <Link
+            href={hasChildren ? '#' : item.href}
+            className="flex items-center space-x-3 flex-1"
+            onClick={(e) => {
+              if (hasChildren) {
+                e.preventDefault()
+                toggleExpanded(item.name)
+              }
+            }}
+          >
             {item.icon && (
               <span className={cn(
                 "flex-shrink-0",
@@ -218,7 +224,9 @@ export function DashboardLayout({ children, user, notifications = 0, complaintsB
               </span>
             )}
             <span>{item.name}</span>
-          </div>
+          </Link>
+
+          {/* Right side - badges and arrow */}
           <div className="flex items-center space-x-2">
             {item.badge && item.badge > 0 && (
               <Badge variant={active ? "secondary" : "error"} size="sm">
@@ -226,20 +234,29 @@ export function DashboardLayout({ children, user, notifications = 0, complaintsB
               </Badge>
             )}
             {hasChildren && (
-              <svg
-                className={cn(
-                  "w-4 h-4 transition-transform",
-                  isExpanded ? "rotate-90" : "rotate-0"
-                )}
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
+              <button
+                onClick={(e) => {
+                  e.preventDefault()
+                  e.stopPropagation()
+                  toggleExpanded(item.name)
+                }}
+                className="p-1 rounded hover:bg-gray-200 hover:bg-opacity-50"
               >
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-              </svg>
+                <svg
+                  className={cn(
+                    "w-4 h-4 transition-transform",
+                    isExpanded ? "rotate-90" : "rotate-0"
+                  )}
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </button>
             )}
           </div>
-        </Link>
+        </div>
         {hasChildren && isExpanded && (
           <div className="mt-1 space-y-1">
             {item.children!.map((child) => (
