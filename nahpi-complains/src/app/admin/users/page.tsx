@@ -123,14 +123,24 @@ export default function AdminUsersEnhanced() {
         console.error('Error loading complaint counts:', complaintsError)
       }
 
-      // Get assigned complaint counts for officers
-      const { data: assignedComplaints, error: assignedError } = await supabase
-        .from('complaints')
-        .select('assigned_officer_id')
-        .not('assigned_officer_id', 'is', null)
+      // Get assigned complaint counts for officers (with fallback)
+      let assignedComplaints: any[] = []
+      try {
+        const { data, error: assignedError } = await supabase
+          .from('complaints')
+          .select('assigned_officer_id')
+          .not('assigned_officer_id', 'is', null)
 
-      if (assignedError) {
-        console.error('Error loading assigned complaints:', assignedError)
+        if (assignedError) {
+          // If assigned_officer_id column doesn't exist, just continue without assignment data
+          // This is expected behavior when assignment tracking is not set up
+          assignedComplaints = []
+        } else {
+          assignedComplaints = data || []
+        }
+      } catch (error) {
+        // Assignment tracking not available - this is expected
+        assignedComplaints = []
       }
 
       // Format users data

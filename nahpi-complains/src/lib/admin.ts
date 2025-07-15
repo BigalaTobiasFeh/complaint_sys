@@ -1,17 +1,15 @@
 import { supabase } from './supabase'
-import { ComplaintService } from './complaints'
-import { DeadlineService } from './deadlines'
-import { WorkflowService } from './workflow'
 
 export class AdminService {
   // Get system-wide statistics
   static async getSystemStats() {
     try {
-      // Get all complaints
-      const complaintsResult = await ComplaintService.getAllComplaints()
-      if (!complaintsResult.success) throw new Error(complaintsResult.error)
-      
-      const complaints = complaintsResult.complaints || []
+      // Get all complaints directly from Supabase
+      const { data: complaints, error: complaintsError } = await supabase
+        .from('complaints')
+        .select('*')
+
+      if (complaintsError) throw complaintsError
 
       // Get user counts
       const { data: users, error: usersError } = await supabase
@@ -28,16 +26,21 @@ export class AdminService {
       if (deptError) throw deptError
 
       // Calculate complaint statistics
-      const totalComplaints = complaints.length
-      const pendingComplaints = complaints.filter(c => c.status === 'pending').length
-      const inProgressComplaints = complaints.filter(c => c.status === 'in_progress').length
-      const resolvedComplaints = complaints.filter(c => c.status === 'resolved').length
-      const rejectedComplaints = complaints.filter(c => c.status === 'rejected').length
+      const totalComplaints = complaints?.length || 0
+      const pendingComplaints = complaints?.filter(c => c.status === 'pending').length || 0
+      const inProgressComplaints = complaints?.filter(c => c.status === 'in_progress').length || 0
+      const resolvedComplaints = complaints?.filter(c => c.status === 'resolved').length || 0
+      const rejectedComplaints = complaints?.filter(c => c.status === 'rejected').length || 0
 
-      // Calculate overdue complaints
-      const overdueComplaints = complaints.filter(c => 
-        DeadlineService.isOverdue(new Date(c.submitted_at), c.category, c.status)
-      ).length
+      // Calculate overdue complaints (simplified logic)
+      const overdueComplaints = complaints?.filter(c => {
+        if (c.status === 'resolved' || c.status === 'rejected') return false
+        const submittedDate = new Date(c.submitted_at)
+        const daysSinceSubmitted = Math.floor((Date.now() - submittedDate.getTime()) / (1000 * 60 * 60 * 24))
+        // Simple overdue logic: more than 7 days for pending, 14 days for in_progress
+        const overdueThreshold = c.status === 'pending' ? 7 : 14
+        return daysSinceSubmitted > overdueThreshold
+      }).length || 0
 
       // Calculate user statistics
       const userStats = {
@@ -116,9 +119,13 @@ export class AdminService {
         const totalComplaints = complaints.length
         const resolvedComplaints = complaints.filter((c: any) => c.status === 'resolved').length
         const pendingComplaints = complaints.filter((c: any) => c.status === 'pending').length
-        const overdueComplaints = complaints.filter((c: any) =>
-          DeadlineService.isOverdue(new Date(c.submitted_at), c.category, c.status)
-        ).length
+        const overdueComplaints = complaints.filter((c: any) => {
+          if (c.status === 'resolved' || c.status === 'rejected') return false
+          const submittedDate = new Date(c.submitted_at)
+          const daysSinceSubmitted = Math.floor((Date.now() - submittedDate.getTime()) / (1000 * 60 * 60 * 24))
+          const overdueThreshold = c.status === 'pending' ? 7 : 14
+          return daysSinceSubmitted > overdueThreshold
+        }).length
 
         // Calculate average resolution time
         const resolvedWithTime = complaints.filter((c: any) => c.status === 'resolved' && c.resolved_at)
@@ -386,26 +393,31 @@ export class AdminService {
       if (error) throw error
 
       // Format the complaints for display
-      const formattedComplaints = complaints.map(complaint => {
-        // Check if complaint is overdue
-        const isOverdue = DeadlineService.isOverdue(
-          new Date(complaint.submitted_at),
-          complaint.category || 'general',
-          complaint.status
-        )
+      const formattedComplaints = complaints?.map(complaint => {
+        // Check if complaint is overdue (simplified logic)
+        const submittedDate = new Date(complaint.submitted_at)
+        const daysSinceSubmitted = Math.floor((Date.now() - submittedDate.getTime()) / (1000 * 60 * 60 * 24))
+        const overdueThreshold = complaint.status === 'pending' ? 7 : 14
+        const isOverdue = (complaint.status !== 'resolved' && complaint.status !== 'rejected') &&
+          daysSinceSubmitted > overdueThreshold
+
+        const studentData = Array.isArray(complaint.students) ? complaint.students[0] : complaint.students
+        const studentInfo = Array.isArray(studentData?.users) ? studentData.users[0] : studentData?.users
+        const departmentInfo = Array.isArray(complaint.departments) ?
+          complaint.departments[0] : complaint.departments
 
         return {
           id: complaint.id,
           complaint_id: complaint.complaint_id,
           title: complaint.title,
-          student_name: complaint.students?.users?.name || 'Unknown Student',
-          department_name: complaint.departments?.name || 'Unknown Department',
+          student_name: studentInfo?.name || 'Unknown Student',
+          department_name: departmentInfo?.name || 'Unknown Department',
           status: complaint.status,
           priority: complaint.priority || 'medium',
           submitted_at: complaint.submitted_at,
           is_overdue: isOverdue
         }
-      })
+      }) || []
 
       return {
         success: true,

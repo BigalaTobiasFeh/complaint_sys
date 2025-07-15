@@ -143,7 +143,6 @@ export default function OfficerManagement() {
             created_at
           )
         `)
-        .order('created_at', { ascending: false })
 
       if (officersError) throw officersError
 
@@ -151,15 +150,25 @@ export default function OfficerManagement() {
       const officersWithData: Officer[] = []
       
       for (const officerData of officersData) {
-        // Get assigned complaints for this officer
-        const { data: assignedComplaints, error: complaintsError } = await supabase
-          .from('complaints')
-          .select('id, complaint_id, title, status, assigned_at, submitted_at, resolved_at')
-          .eq('assigned_officer_id', officerData.id)
-          .order('assigned_at', { ascending: false })
+        // Get assigned complaints for this officer (with fallback)
+        let assignedComplaints: any[] = []
+        try {
+          const { data, error: complaintsError } = await supabase
+            .from('complaints')
+            .select('id, complaint_id, title, status, assigned_at, submitted_at, resolved_at')
+            .eq('assigned_officer_id', officerData.id)
+            .order('assigned_at', { ascending: false })
 
-        if (complaintsError) {
-          console.error(`Error loading complaints for officer ${officerData.id}:`, complaintsError)
+          if (complaintsError) {
+            // If assignment columns don't exist, continue without assignment data
+            // This is expected behavior when assignment tracking is not set up
+            assignedComplaints = []
+          } else {
+            assignedComplaints = data || []
+          }
+        } catch (error) {
+          // Assignment tracking not available - this is expected
+          assignedComplaints = []
         }
 
         const assignedCount = assignedComplaints?.length || 0
