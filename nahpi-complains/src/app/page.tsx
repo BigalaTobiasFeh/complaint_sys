@@ -29,7 +29,7 @@ export default function Home() {
           <div className="max-w-5xl mx-auto text-center">
             <div className="mb-12">
               <h1 className="text-5xl md:text-7xl lg:text-8xl font-bold text-white mb-8 leading-tight">
-                NAHPi Complaints
+                NAHPI Complaints
               </h1>
               <div className="max-w-4xl mx-auto mb-10">
                 <p className="text-xl md:text-2xl lg:text-3xl text-white/90 leading-relaxed font-light">
@@ -102,7 +102,7 @@ export default function Home() {
 
             {/* User Types Section */}
             <div className="bg-white/95 backdrop-blur-sm rounded-2xl p-8 shadow-lg">
-              <h2 className="text-3xl font-bold text-center text-primary mb-8">Who Can Use NAHPi Complaints?</h2>
+              <h2 className="text-3xl font-bold text-center text-primary mb-8">Who Can Use NAHPI Complaints?</h2>
               <div className="grid md:grid-cols-3 gap-8">
                 <div className="text-center">
                   <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -141,9 +141,9 @@ export default function Home() {
         {/* Footer */}
         <footer className="relative z-10 bg-primary/95 backdrop-blur-sm text-white py-8">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-            <p className="text-lg font-semibold mb-2">NAHPi Complaints</p>
+            <p className="text-lg font-semibold mb-2">NAHPI Complaints</p>
             <p className="text-blue-100">Streamlining complaint resolution for educational excellence</p>
-            <p className="text-blue-200 text-sm mt-4">© 2024 NAHPi. All rights reserved.</p>
+            <p className="text-blue-200 text-sm mt-4">© 2024 NAHPI. All rights reserved.</p>
           </div>
         </footer>
       </div>

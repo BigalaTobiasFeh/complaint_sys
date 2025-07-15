@@ -160,7 +160,7 @@ export default function RegisterPage() {
               <span className="text-white font-bold">NC</span>
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-primary">NAHPi Complaints</h1>
+              <h1 className="text-2xl font-bold text-primary">NAHPI Complaints</h1>
               <p className="text-sm text-gray-600">Student Registration</p>
             </div>
           </Link>

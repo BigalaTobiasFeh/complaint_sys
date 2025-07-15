@@ -291,7 +291,7 @@ export function DashboardLayout({ children, user, notifications = 0, complaintsB
                 <span className="text-white font-bold text-sm">NC</span>
               </div>
               <div>
-                <h1 className="text-lg font-bold text-primary">NAHPi Complains</h1>
+                <h1 className="text-lg font-bold text-primary">NAHPI Complains</h1>
                 <p className="text-xs text-gray-500 capitalize">{user?.role?.replace('_', ' ') || 'User'}</p>
               </div>
             </Link>

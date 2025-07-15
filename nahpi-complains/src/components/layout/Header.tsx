@@ -43,7 +43,7 @@ export function Header({ user, notifications = 0 }: HeaderProps) {
                 <span className="text-white font-bold text-sm">NC</span>
               </div>
               <div className="hidden sm:block">
-                <h1 className="text-xl font-bold text-primary">NAHPi Complains</h1>
+                <h1 className="text-xl font-bold text-primary">NAHPI Complains</h1>
                 <p className="text-xs text-gray-500">Complaint Management System</p>
               </div>
             </Link>

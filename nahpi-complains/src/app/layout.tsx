@@ -15,10 +15,10 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "NAHPi Complains - Complaint Management System",
+  title: "NAHPI Complains - Complaint Management System",
   description: "A comprehensive complaint management system for educational institutions. Submit, track, and resolve complaints efficiently.",
-  keywords: ["complaint management", "education", "student services", "NAHPi"],
-  authors: [{ name: "NAHPi Development Team" }],
+  keywords: ["complaint management", "education", "student services", "NAHPI"],
+  authors: [{ name: "NAHPI Development Team" }],
   viewport: "width=device-width, initial-scale=1",
 };
 

@@ -13,7 +13,7 @@ export function Footer() {
                 <span className="text-primary font-bold text-sm">NC</span>
               </div>
               <div>
-                <h3 className="text-lg font-bold">NAHPi Complaints</h3>
+                <h3 className="text-lg font-bold">NAHPI Complaints</h3>
                 <p className="text-blue-100 text-sm">Complaint Management System</p>
               </div>
             </div>
@@ -92,7 +92,7 @@ export function Footer() {
         {/* Bottom Bar */}
         <div className="border-t border-blue-600 mt-8 pt-6 flex flex-col sm:flex-row justify-between items-center">
           <p className="text-blue-200 text-sm">
-            © 2024 NAHPi. All rights reserved.
+            © 2024 NAHPI. All rights reserved.
           </p>
           <div className="flex space-x-6 mt-4 sm:mt-0">
             <a href="#" className="text-blue-200 hover:text-white transition-colors">
