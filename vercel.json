@@ -1,0 +1,8 @@
+{
+  "framework": "nextjs",
+  "buildCommand": "cd nahpi-complains && npm run build",
+  "outputDirectory": "nahpi-complains/.next",
+  "installCommand": "cd nahpi-complains && npm install",
+  "devCommand": "cd nahpi-complains && npm run dev",
+  "rootDirectory": "nahpi-complains"
+}
