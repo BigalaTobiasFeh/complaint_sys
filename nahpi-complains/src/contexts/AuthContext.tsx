@@ -10,8 +10,9 @@ interface AuthContextType {
   user: AuthUser | null
   studentProfile: StudentAuthUser | null
   loading: boolean
+  loggingOut: boolean
   login: (credentials: { email?: string; matricule?: string; password: string; userType: UserRole }) => Promise<{ success: boolean; error?: string }>
-  logout: () => Promise<void>
+  logout: () => Promise<{ success: boolean; error?: string }>
   refreshUser: () => Promise<void>
 }
 
@@ -21,6 +22,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null)
   const [studentProfile, setStudentProfile] = useState<StudentAuthUser | null>(null)
   const [loading, setLoading] = useState(true)
+  const [loggingOut, setLoggingOut] = useState(false)
 
   useEffect(() => {
     // Get initial session
@@ -97,10 +99,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
-  const logout = async () => {
-    await AuthService.logout()
-    setUser(null)
-    setStudentProfile(null)
+  const logout = async (): Promise<{ success: boolean; error?: string }> => {
+    try {
+      setLoggingOut(true)
+
+      // Clear local state immediately for better UX
+      setUser(null)
+      setStudentProfile(null)
+
+      // Call Supabase logout
+      const result = await AuthService.logout()
+
+      // Clear any cached data
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('supabase.auth.token')
+        sessionStorage.clear()
+      }
+
+      return result
+    } catch (error: any) {
+      console.error('Logout error:', error)
+      return { success: false, error: error.message }
+    } finally {
+      setLoggingOut(false)
+    }
   }
 
   const refreshUser = async () => {
@@ -114,6 +136,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     user,
     studentProfile,
     loading,
+    loggingOut,
     login,
     logout,
     refreshUser

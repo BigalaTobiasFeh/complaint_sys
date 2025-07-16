@@ -343,4 +343,39 @@ export class AuthService {
       return { success: false, error: error.message }
     }
   }
+
+  // Logout user with proper error handling
+  static async logout(): Promise<{ success: boolean; error?: string }> {
+    try {
+      // Sign out from Supabase
+      const { error } = await supabase.auth.signOut()
+
+      if (error) {
+        console.error('Supabase logout error:', error)
+        return { success: false, error: error.message }
+      }
+
+      // Clear any additional session data
+      if (typeof window !== 'undefined') {
+        // Clear localStorage
+        Object.keys(localStorage).forEach(key => {
+          if (key.startsWith('supabase.') || key.startsWith('sb-')) {
+            localStorage.removeItem(key)
+          }
+        })
+
+        // Clear sessionStorage
+        Object.keys(sessionStorage).forEach(key => {
+          if (key.startsWith('supabase.') || key.startsWith('sb-')) {
+            sessionStorage.removeItem(key)
+          }
+        })
+      }
+
+      return { success: true }
+    } catch (error: any) {
+      console.error('Logout error:', error)
+      return { success: false, error: error.message }
+    }
+  }
 }

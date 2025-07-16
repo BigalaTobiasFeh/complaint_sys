@@ -145,7 +145,7 @@ export function DashboardLayout({ children, user, notifications = 0, complaintsB
   const [expandedItems, setExpandedItems] = useState<string[]>([])
   const pathname = usePathname()
   const router = useRouter()
-  const { logout } = useAuth()
+  const { logout, loggingOut } = useAuth()
 
   // Update department navigation with dynamic badge
   const updatedDepartmentNavigation = departmentNavigation.map(item => {
@@ -167,10 +167,20 @@ export function DashboardLayout({ children, user, notifications = 0, complaintsB
 
   const handleLogout = async () => {
     try {
-      await logout()
-      router.push('/login')
+      const result = await logout()
+      if (result.success) {
+        // Redirect based on user role
+        const redirectPath = user.role === 'admin' ? '/admin/login' :
+                           user.role === 'department_officer' ? '/department/login' :
+                           '/login'
+        router.push(redirectPath)
+      } else {
+        console.error('Logout failed:', result.error)
+        alert('Logout failed. Please try again.')
+      }
     } catch (error) {
       console.error('Error logging out:', error)
+      alert('An error occurred during logout. Please try again.')
     }
   }
 
@@ -335,11 +345,21 @@ export function DashboardLayout({ children, user, notifications = 0, complaintsB
               size="sm"
               className="w-full mt-3 justify-start text-gray-600 hover:text-gray-800 hover:bg-gray-100"
               onClick={handleLogout}
+              disabled={loggingOut}
             >
-              <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-              </svg>
-              Logout
+              {loggingOut ? (
+                <>
+                  <div className="w-4 h-4 mr-2 animate-spin rounded-full border-2 border-gray-300 border-t-gray-600"></div>
+                  Logging out...
+                </>
+              ) : (
+                <>
+                  <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                  </svg>
+                  Logout
+                </>
+              )}
             </Button>
           </div>
         </div>
