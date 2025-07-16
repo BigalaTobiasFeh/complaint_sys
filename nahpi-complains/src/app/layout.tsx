@@ -7,11 +7,15 @@ import { NotificationProvider } from "@/contexts/NotificationContext";
 const inter = Inter({
   subsets: ["latin"],
   variable: "--font-inter",
+  display: "swap",
+  preload: true,
 });
 
 const jetbrainsMono = JetBrains_Mono({
   subsets: ["latin"],
   variable: "--font-jetbrains-mono",
+  display: "swap",
+  preload: false, // Only preload if actually used
 });
 
 export const metadata: Metadata = {

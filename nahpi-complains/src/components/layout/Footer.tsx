@@ -61,7 +61,7 @@ export function Footer() {
             <h4 className="font-semibold mb-4">Support</h4>
             <ul className="space-y-2 text-sm">
               <li>
-                <a href="#" className="text-blue-100 hover:text-white transition-colors">
+                <a href="https://ubastudent.online/" target="_blank" className="text-blue-100 hover:text-white transition-colors">
                   Help Center
                 </a>
               </li>
